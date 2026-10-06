@@ -1,0 +1,1404 @@
+Build a complete, modern, responsive, AI-powered web application called:
+
+"AgriCycle – Agricultural Waste Marketplace"
+
+IMPORTANT:
+This project is based on the following official problem statement:
+
+"Build a platform where farmers can list agricultural waste such as straw, husks, and crop residues so industries can purchase and reuse them."
+
+The main goal is to create a working prototype that connects FARMERS who have agricultural waste with INDUSTRIES/BUYERS who need agricultural waste.
+
+The application should look like a professional startup product, not a basic college CRUD project.
+
+====================================================
+1. CORE IDEA
+====================================================
+
+Create a two-sided agricultural waste marketplace.
+
+Farmers can:
+- Register/login
+- Create agricultural waste listings
+- Upload photos of their waste
+- Use AI to identify the waste type from the image
+- Enter or estimate quantity
+- Get AI-based suggested pricing
+- Add location
+- View nearby buyers
+- Receive offers from industries
+- Accept/reject offers
+- Arrange pickup
+- Track orders
+- Track earnings
+- View sales history
+- Receive notifications
+
+Industries/Buyers can:
+- Register/login
+- Search agricultural waste
+- Filter by waste type, quantity, price and location
+- View waste listings
+- See farmer/location information
+- Make an offer
+- Purchase waste
+- Arrange pickup
+- Track orders
+- View purchase history
+
+The platform should help:
+1. Farmers earn additional income from agricultural waste.
+2. Industries get agricultural raw materials easily.
+3. Reduce agricultural waste burning.
+4. Promote recycling and circular economy.
+5. Reduce unnecessary transportation by connecting nearby farmers and industries.
+
+====================================================
+2. TECHNOLOGY STACK
+====================================================
+
+Use a modern full-stack architecture.
+
+Frontend:
+- React
+- Vite
+- TypeScript if practical
+- Tailwind CSS
+- Responsive design
+- Lucide React icons
+- Recharts for charts
+
+Backend:
+- Node.js
+- Express.js
+
+Database:
+- PostgreSQL
+- Use Replit's database/environment if available.
+
+Authentication:
+- Secure email/password authentication.
+- Role-based authentication:
+  - Farmer
+  - Industry/Buyer
+  - Admin
+
+AI:
+- Use an available AI API through environment variables.
+- Do NOT expose API keys in frontend.
+- If an AI API is unavailable, create a realistic fallback/demo AI system so the entire application still works.
+
+Maps/location:
+- Use a map integration if an API key is available.
+- Otherwise provide a clean map-style UI using coordinates/location data.
+
+====================================================
+3. DESIGN REQUIREMENTS
+====================================================
+
+Create a premium agricultural technology startup UI.
+
+Brand:
+Name: AgriCycle
+Tagline:
+"Turn Agricultural Waste into Opportunity."
+
+Visual style:
+- Modern
+- Clean
+- Professional
+- Agriculture-focused
+- Green/earth-inspired appearance
+- White/light backgrounds with green accents
+- Dark green primary buttons
+- Rounded cards
+- Soft shadows
+- Modern typography
+- Good spacing
+- Professional dashboard layout
+
+Do NOT make the website look like a simple template.
+
+The application must be:
+- Mobile responsive
+- Tablet responsive
+- Desktop responsive
+
+Use:
+- Navbar
+- Sidebar for dashboards
+- Cards
+- Tables
+- Charts
+- Badges
+- Modals
+- Toast notifications
+- Loading states
+- Empty states
+- Error states
+- Confirmation dialogs
+
+Add subtle animations but don't overdo them.
+
+====================================================
+4. LANDING PAGE
+====================================================
+
+Create an impressive landing page.
+
+Sections:
+
+1. Hero section
+
+Headline:
+"Turn Agricultural Waste into Opportunity."
+
+Subtitle:
+"Connect farmers with industries that need agricultural waste and transform crop residues into valuable resources."
+
+Buttons:
+- "Start Selling"
+- "Find Agricultural Waste"
+
+Add an attractive agricultural illustration/visual.
+
+2. How It Works
+
+Show 4 steps:
+
+For Farmers:
+1. Upload Waste
+2. AI Identifies It
+3. Get Price Suggestion
+4. Sell & Earn
+
+For Industries:
+1. Search Waste
+2. Make Offer
+3. Arrange Pickup
+4. Reuse
+
+3. Supported Waste Types
+
+Examples:
+- Straw
+- Rice Husk
+- Wheat Husk
+- Corn Residue
+- Sugarcane Bagasse
+- Coconut Waste
+- Groundnut Shells
+- Cotton Residue
+- Other Crop Residues
+
+4. Benefits
+
+Farmer benefits:
+- Extra income
+- Easy selling
+- Nearby buyers
+- AI price suggestions
+- Pickup support
+
+Industry benefits:
+- Easy sourcing
+- Verified listings
+- Better pricing
+- Nearby suppliers
+- Sustainable sourcing
+
+5. Sustainability section
+
+Show statistics such as:
+- Agricultural waste reused
+- Farmers connected
+- Industries connected
+- Waste diverted from burning
+
+These can initially be demo statistics.
+
+6. Call to Action
+
+"Give Agricultural Waste a Second Life."
+
+Buttons:
+"Join as Farmer"
+"Join as Industry"
+
+====================================================
+5. AUTHENTICATION
+====================================================
+
+Create:
+
+/login
+/register
+/forgot-password
+
+Registration should ask:
+
+Name
+Email
+Phone
+Password
+Role
+
+Role options:
+- Farmer
+- Industry
+
+For farmers:
+- Village/City
+- State
+- Farm size (optional)
+
+For industries:
+- Company name
+- Industry type
+- Location
+- Required waste types
+
+After login redirect users based on role.
+
+Farmer → Farmer Dashboard
+Industry → Industry Dashboard
+Admin → Admin Dashboard
+
+====================================================
+6. FARMER DASHBOARD
+====================================================
+
+Create a professional dashboard.
+
+Display:
+
+Welcome message:
+"Welcome back, [Farmer Name]"
+
+Summary cards:
+
+- Active Listings
+- Total Offers
+- Completed Sales
+- Total Earnings
+- Waste Reused
+
+Dashboard sections:
+
+1. Recent Listings
+2. Recent Offers
+3. Upcoming Pickups
+4. Earnings Chart
+5. Notifications
+
+Add charts:
+- Monthly earnings
+- Waste sold by type
+- Number of buyers
+
+====================================================
+7. CREATE WASTE LISTING
+====================================================
+
+Create a page:
+
+"List Agricultural Waste"
+
+Fields:
+
+Waste photo upload
+Waste type
+Quantity
+Unit:
+- kg
+- ton
+- quintal
+
+Location
+Available date
+Expected price
+Description
+Pickup preference
+
+Add AI functionality.
+
+When farmer uploads an image:
+
+Show:
+
+"AI Analyzing Image..."
+
+Then return:
+
+AI detected waste:
+"Rice Husk"
+
+Confidence:
+"94%"
+
+Possible alternatives:
+"Straw – 4%"
+"Other Crop Residue – 2%"
+
+Allow farmer to confirm/change the detected waste type.
+
+====================================================
+8. AI WASTE IDENTIFICATION
+====================================================
+
+Create an AI service:
+
+POST /api/ai/classify-waste
+
+Input:
+- image
+
+Output:
+
+{
+  wasteType,
+  confidence,
+  description,
+  possibleUses
+}
+
+Example:
+
+{
+  "wasteType": "Rice Husk",
+  "confidence": 0.94,
+  "description": "Dry rice milling residue",
+  "possibleUses": [
+    "Biofuel",
+    "Animal bedding",
+    "Biomass energy",
+    "Construction materials"
+  ]
+}
+
+IMPORTANT:
+
+If a real computer vision API is unavailable, implement a demo/fallback AI classification system that still produces realistic results.
+
+Do not let missing API keys break the application.
+
+====================================================
+9. AI PRICE ESTIMATION
+====================================================
+
+After waste type and quantity are entered, provide:
+
+"AI Suggested Price"
+
+Example:
+
+Waste:
+Rice Husk
+
+Quantity:
+500 kg
+
+Estimated market range:
+₹2,500 – ₹3,500
+
+Suggested listing price:
+₹3,000
+
+Explain:
+
+"Price is estimated based on waste type, quantity, location and current marketplace data."
+
+Add a disclaimer:
+"AI price estimates are suggestions and may vary based on local market conditions."
+
+Create endpoint:
+
+POST /api/ai/price-estimate
+
+Input:
+- wasteType
+- quantity
+- location
+- quality
+
+Output:
+- minimumPrice
+- maximumPrice
+- suggestedPrice
+- explanation
+
+Use realistic demo logic if no external market API exists.
+
+====================================================
+10. WASTE LISTING PAGE
+====================================================
+
+Each listing should contain:
+
+Photo
+Waste type
+Quantity
+Price
+Location
+Farmer name
+Distance
+Date listed
+Availability
+Description
+AI identification confidence
+Possible uses
+
+Buttons:
+
+"Make Offer"
+"Buy Now"
+"Contact Farmer"
+
+Show similar listings.
+
+====================================================
+11. INDUSTRY SEARCH
+====================================================
+
+Create a powerful marketplace search page.
+
+Search by:
+
+Waste type
+Location
+Quantity
+Price
+Distance
+Availability
+
+Filters:
+
+- Straw
+- Rice Husk
+- Wheat Husk
+- Corn Residue
+- Bagasse
+- Coconut Waste
+- Groundnut Shell
+- Other
+
+Price range slider.
+
+Distance filter:
+- 5 km
+- 10 km
+- 25 km
+- 50 km
+- 100 km
+
+Sort:
+- Nearest
+- Lowest Price
+- Highest Quantity
+- Recently Added
+
+====================================================
+12. LOCATION / NEARBY BUYERS
+====================================================
+
+For farmers:
+
+Create "Nearby Buyers".
+
+Show:
+
+Buyer/company name
+Distance
+Required waste
+Quantity needed
+Offer price
+Pickup availability
+
+Example:
+
+"Green BioEnergy Pvt Ltd"
+12 km away
+Needs: Rice Husk
+Required: 2 tons
+Offer: ₹7,500/ton
+
+Buttons:
+"View Details"
+"Make Deal"
+
+For industries:
+
+Create "Nearby Waste Suppliers".
+
+====================================================
+13. OFFER SYSTEM
+====================================================
+
+Industries can make offers.
+
+Offer form:
+
+Listing
+Quantity
+Offer price
+Pickup date
+Message
+
+Farmer receives notification.
+
+Farmer can:
+
+Accept
+Reject
+Counter Offer
+
+Implement counter-offer functionality.
+
+Offer status:
+
+Pending
+Accepted
+Rejected
+Countered
+Expired
+
+====================================================
+14. PURCHASE FLOW
+====================================================
+
+Implement a complete purchase workflow.
+
+Flow:
+
+Industry selects listing
+↓
+Chooses quantity
+↓
+Makes offer / buys
+↓
+Farmer accepts
+↓
+Order created
+↓
+Pickup scheduled
+↓
+Pickup in progress
+↓
+Waste collected
+↓
+Order completed
+
+Order statuses:
+
+Pending
+Confirmed
+Pickup Scheduled
+Picked Up
+Completed
+Cancelled
+
+====================================================
+15. PICKUP MANAGEMENT
+====================================================
+
+Create pickup scheduling.
+
+Fields:
+
+Pickup date
+Pickup time
+Pickup address
+Contact number
+Transport requirement
+
+Display pickup tracking.
+
+Example:
+
+Order #AG1234
+
+✓ Order Confirmed
+✓ Pickup Scheduled
+○ Pickup In Progress
+○ Completed
+
+Allow farmer and buyer to view pickup details.
+
+====================================================
+16. NOTIFICATION SYSTEM
+====================================================
+
+Create notification center.
+
+Notifications:
+
+"New offer received"
+"Your listing received a buyer request"
+"Offer accepted"
+"Pickup scheduled"
+"Buyer cancelled order"
+"Payment completed"
+"New nearby buyer"
+"Your listing expires soon"
+
+Show unread count.
+
+====================================================
+17. FARMER EARNINGS
+====================================================
+
+Create earnings page.
+
+Show:
+
+Total Earnings
+This Month
+Pending Payments
+Completed Sales
+
+Charts:
+- Monthly earnings
+- Waste type revenue
+- Number of sales
+
+Transaction table:
+
+Date
+Waste
+Buyer
+Quantity
+Amount
+Status
+
+====================================================
+18. INDUSTRY DASHBOARD
+====================================================
+
+Dashboard cards:
+
+- Active Purchases
+- Pending Offers
+- Completed Purchases
+- Total Quantity Purchased
+- Money Spent
+
+Sections:
+
+Recent Purchases
+Pending Offers
+Upcoming Pickups
+Recommended Waste
+
+Add charts:
+- Monthly purchases
+- Waste type distribution
+- Spending
+
+====================================================
+19. AI RECOMMENDATION SYSTEM
+====================================================
+
+Add AI-powered recommendations.
+
+For farmers:
+Recommend:
+- Nearby industries
+- Best buyers
+- Suggested price
+- Waste categories in demand
+
+For industries:
+Recommend:
+- Nearby waste listings
+- Relevant farmers
+- Alternative waste types
+- Best-value listings
+
+Example:
+
+"AI Recommendation"
+
+"Rice husk is currently in high demand from 3 industries within 30 km of your location."
+
+If real AI is unavailable, implement intelligent rule-based recommendations.
+
+====================================================
+20. DEMAND HEATMAP
+====================================================
+
+Create a page:
+
+"Market Demand"
+
+Show which agricultural waste types have higher demand.
+
+Example:
+
+Rice Husk:
+High Demand 🔥
+
+Straw:
+Medium Demand
+
+Corn Residue:
+High Demand
+
+Bagasse:
+Very High Demand
+
+Use charts and cards.
+
+Add:
+
+"Top Industries Looking for Waste"
+
+====================================================
+21. WASTE USE CASE INFORMATION
+====================================================
+
+When viewing a waste type, show possible industrial uses.
+
+Example:
+
+Rice Husk:
+- Biomass fuel
+- Biochar
+- Animal bedding
+- Construction material
+- Energy production
+
+Straw:
+- Animal feed
+- Biofuel
+- Compost
+- Paper production
+
+Sugarcane Bagasse:
+- Bioenergy
+- Paper
+- Packaging
+- Bio-based products
+
+This helps farmers understand the value of their waste.
+
+====================================================
+22. ADMIN DASHBOARD
+====================================================
+
+Create Admin dashboard.
+
+Admin can view:
+
+Total Users
+Farmers
+Industries
+Listings
+Orders
+Total Waste Reused
+Total Transactions
+
+Admin can:
+
+- Manage users
+- Approve/reject users
+- View listings
+- Remove inappropriate listings
+- View transactions
+- View reports
+- Monitor platform activity
+
+Charts:
+- User growth
+- Listings
+- Transactions
+- Waste reused
+- Revenue
+
+====================================================
+23. VERIFICATION SYSTEM
+====================================================
+
+Add basic verification badges.
+
+Farmer:
+✓ Verified Farmer
+
+Industry:
+✓ Verified Industry
+
+For demo purposes, admin can verify accounts.
+
+Display verification badges on listings.
+
+====================================================
+24. REVIEWS AND RATINGS
+====================================================
+
+After completed transactions:
+
+Buyer can rate farmer.
+
+Farmer can rate buyer.
+
+Rating:
+1–5 stars
+
+Review text.
+
+Show average rating on profiles.
+
+====================================================
+25. PROFILE PAGES
+====================================================
+
+Farmer profile:
+
+Name
+Location
+Verified badge
+Rating
+Total sales
+Total waste sold
+Listings
+Reviews
+
+Industry profile:
+
+Company name
+Industry type
+Location
+Verified badge
+Rating
+Total purchases
+Waste purchased
+Reviews
+
+====================================================
+26. SMART DASHBOARD INSIGHTS
+====================================================
+
+Add an AI Insights section.
+
+Example farmer insight:
+
+"Your rice husk listings received 35% more views this month."
+
+"Industries near you are currently looking for straw."
+
+"Your average selling price is ₹5.8/kg."
+
+Example industry insight:
+
+"Rice husk suppliers within 20 km can reduce your estimated transport cost."
+
+====================================================
+27. SUSTAINABILITY CALCULATOR
+====================================================
+
+Add a feature:
+
+"Environmental Impact"
+
+For every completed sale calculate estimated impact.
+
+Show:
+
+Waste Reused:
+500 kg
+
+Estimated Open Burning Avoided:
+500 kg
+
+Estimated CO₂ impact avoided:
+demo calculated value
+
+Do not claim exact scientific accuracy.
+
+Clearly label values as:
+"Estimated impact"
+
+Create a visual sustainability score.
+
+====================================================
+28. SEARCH AND FILTERING
+====================================================
+
+Implement real search functionality.
+
+Search should work across:
+
+Waste type
+Location
+Farmer
+Industry
+Description
+
+Filters must actually change displayed results.
+
+Do not create fake buttons that do nothing.
+
+====================================================
+29. DATABASE STRUCTURE
+====================================================
+
+Create proper database models/tables:
+
+Users
+Profiles
+WasteListings
+WasteImages
+Offers
+Orders
+Pickups
+Notifications
+Reviews
+Transactions
+Favorites
+AIAnalysis
+Locations
+
+Suggested fields:
+
+Users:
+id
+name
+email
+phone
+passwordHash
+role
+verified
+createdAt
+
+WasteListings:
+id
+farmerId
+wasteType
+quantity
+unit
+price
+location
+latitude
+longitude
+description
+imageUrl
+aiConfidence
+status
+createdAt
+
+Offers:
+id
+listingId
+buyerId
+farmerId
+quantity
+price
+status
+message
+createdAt
+
+Orders:
+id
+listingId
+buyerId
+farmerId
+quantity
+totalAmount
+status
+createdAt
+
+Pickups:
+id
+orderId
+pickupDate
+pickupTime
+address
+status
+
+Reviews:
+id
+fromUserId
+toUserId
+orderId
+rating
+comment
+
+Notifications:
+id
+userId
+title
+message
+read
+createdAt
+
+====================================================
+30. API ENDPOINTS
+====================================================
+
+Create REST APIs.
+
+Authentication:
+
+POST /api/auth/register
+POST /api/auth/login
+GET /api/auth/me
+
+Listings:
+
+GET /api/listings
+POST /api/listings
+GET /api/listings/:id
+PUT /api/listings/:id
+DELETE /api/listings/:id
+
+Offers:
+
+POST /api/offers
+GET /api/offers
+PUT /api/offers/:id
+
+Orders:
+
+POST /api/orders
+GET /api/orders
+GET /api/orders/:id
+PUT /api/orders/:id
+
+AI:
+
+POST /api/ai/classify-waste
+POST /api/ai/price-estimate
+POST /api/ai/recommendations
+
+Notifications:
+
+GET /api/notifications
+PUT /api/notifications/:id/read
+
+Reviews:
+
+POST /api/reviews
+GET /api/reviews/:userId
+
+Admin:
+
+GET /api/admin/users
+GET /api/admin/listings
+GET /api/admin/statistics
+
+====================================================
+31. DEMO DATA
+====================================================
+
+Very important:
+
+Populate the application with realistic demo data so the application does not look empty during the hackathon presentation.
+
+Create:
+
+At least 10 farmers
+At least 5 industries
+At least 20 waste listings
+At least 10 offers
+At least 10 orders
+Notifications
+Reviews
+Transactions
+
+Example locations can include:
+
+Anantapur
+Tirupati
+Kadapa
+Kurnool
+Chittoor
+Bangalore
+Hyderabad
+
+Use fictional names and fictional company names for demo data.
+
+====================================================
+32. DEMO LOGIN
+====================================================
+
+Create demo accounts.
+
+Farmer:
+Email: farmer@agricycle.demo
+Password: demo123
+
+Industry:
+Email: industry@agricycle.demo
+Password: demo123
+
+Admin:
+Email: admin@agricycle.demo
+Password: admin123
+
+Make sure these accounts actually work.
+
+====================================================
+33. AI FALLBACK MODE
+====================================================
+
+This is extremely important.
+
+The project must work even if external AI APIs are unavailable.
+
+Create:
+
+AI_MODE = "demo" or "real"
+
+If API key exists:
+Use real AI.
+
+If API key does not exist:
+Use demo AI.
+
+Demo AI should still show:
+- Waste classification
+- Confidence
+- Price estimation
+- Recommendations
+- Demand insights
+
+Do not allow the application to crash because an AI API key is missing.
+
+====================================================
+34. ERROR HANDLING
+====================================================
+
+Implement proper:
+
+Loading states
+API error messages
+Validation
+Empty states
+404 page
+Authentication errors
+Database errors
+Image upload errors
+
+Show user-friendly messages.
+
+Never show raw stack traces to users.
+
+====================================================
+35. SECURITY
+====================================================
+
+Implement:
+
+Password hashing
+Authentication middleware
+Role-based authorization
+Input validation
+Environment variables
+Protected API routes
+
+Never expose:
+- Database credentials
+- API keys
+- Secrets
+
+====================================================
+36. RESPONSIVE MOBILE DESIGN
+====================================================
+
+On mobile:
+
+Bottom navigation or collapsible sidebar.
+
+Cards should stack vertically.
+
+Tables should become responsive cards.
+
+Image upload should work on mobile.
+
+Buttons should be easy to tap.
+
+====================================================
+37. HACKATHON PRESENTATION MODE
+====================================================
+
+Create a special demo-friendly experience.
+
+Add a "Demo Mode" if useful.
+
+The judge should be able to quickly experience:
+
+Farmer login
+↓
+Create waste listing
+↓
+Upload image
+↓
+AI identifies waste
+↓
+AI suggests price
+↓
+Listing published
+↓
+Industry searches listing
+↓
+Industry makes offer
+↓
+Farmer receives notification
+↓
+Farmer accepts offer
+↓
+Pickup scheduled
+↓
+Order completed
+↓
+Farmer sees earnings
+↓
+Environmental impact updated
+
+This should be the main end-to-end demo flow.
+
+====================================================
+38. UI PAGES
+====================================================
+
+Create these pages:
+
+Public:
+
+/
+ /login
+ /register
+ /about
+ /how-it-works
+ /marketplace
+
+Farmer:
+
+/farmer/dashboard
+/farmer/listings
+/farmer/listings/new
+/farmer/listings/:id
+/farmer/offers
+/farmer/orders
+/farmer/pickups
+/farmer/earnings
+/farmer/buyers
+/farmer/notifications
+/farmer/profile
+/farmer/impact
+
+Industry:
+
+/industry/dashboard
+/industry/marketplace
+/industry/listings/:id
+/industry/offers
+/industry/orders
+/industry/pickups
+/industry/suppliers
+/industry/notifications
+/industry/profile
+/industry/analytics
+
+Admin:
+
+/admin/dashboard
+/admin/users
+/admin/listings
+/admin/orders
+/admin/reports
+/admin/settings
+
+====================================================
+39. IMPORTANT FUNCTIONALITY RULE
+====================================================
+
+Do NOT build only frontend mockups.
+
+The core features must actually work.
+
+Buttons should work.
+
+Forms should work.
+
+Data should be saved.
+
+Search should work.
+
+Filters should work.
+
+Offers should work.
+
+Orders should work.
+
+Notifications should work.
+
+Dashboard statistics should update from database data.
+
+Authentication should work.
+
+Role-based access should work.
+
+AI should work through real API when configured and fallback demo AI when not configured.
+
+====================================================
+40. FINAL POLISH
+====================================================
+
+Before finishing:
+
+- Remove console errors.
+- Fix broken routes.
+- Fix broken buttons.
+- Make all pages responsive.
+- Make forms validated.
+- Make navigation work.
+- Make database operations work.
+- Add loading states.
+- Add toast messages.
+- Add realistic demo data.
+- Ensure demo accounts work.
+- Ensure the application starts with one command.
+- Ensure environment variables are documented.
+
+Create a README containing:
+
+Project name
+Problem statement
+Solution
+Features
+Technology stack
+Database structure
+AI functionality
+How to run
+Environment variables
+Demo credentials
+Future scope
+
+====================================================
+41. FINAL HACKATHON QUALITY
+====================================================
+
+The final application should communicate these 5 points clearly:
+
+1. AGRICULTURAL WASTE IS A RESOURCE
+2. FARMERS CAN EARN FROM WASTE
+3. INDUSTRIES CAN FIND WASTE EASILY
+4. AI MAKES LISTING AND PRICING SMARTER
+5. THE PLATFORM SUPPORTS A CIRCULAR ECONOMY
+
+Make the application visually impressive enough for a hackathon judging demo.
+
+Prioritize a fully working end-to-end Farmer → AI → Marketplace → Industry → Offer → Pickup → Order → Earnings flow over unnecessary extra features.
+
+Build the project now.
+First create the complete project structure.
+Then implement the database.
+Then backend APIs.
+Then authentication.
+Then frontend.
+Then AI services.
+Then dashboards.
+Then marketplace.
+Then test all major flows.
+Fix any errors you encounter automatically.
+Do not stop at a plan or explanation — actually implement the working application.
