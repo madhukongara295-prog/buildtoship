@@ -3,13 +3,33 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AgriCycle agricultural waste marketplace API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profiles
+    description: User profiles and reviews
+  - name: listings
+    description: Agricultural waste marketplace listings
+  - name: offers
+    description: Buyer offers and farmer responses
+  - name: orders
+    description: Purchases, pickup scheduling, and fulfillment
+  - name: dashboard
+    description: Role-aware dashboard summaries
+  - name: ai
+    description: AI-assisted classification and pricing
+  - name: notifications
+    description: User notifications
+  - name: market
+    description: Demand and nearby participants
+  - name: admin
+    description: Platform administration
+  - name: storage
+    description: Listing photo uploads
 paths:
   /healthz:
     get:
@@ -24,6 +44,520 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /profiles/me:
+    get:
+      operationId: getMyProfile
+      tags: [profiles]
+      summary: Get the signed-in user's marketplace profile
+      responses:
+        "200":
+          description: Profile, or null until onboarding is complete
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Profile"
+                  - type: "null"
+    put:
+      operationId: saveMyProfile
+      tags: [profiles]
+      summary: Create or update the signed-in user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Saved profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+  /profiles/{profileId}:
+    get:
+      operationId: getProfile
+      tags: [profiles]
+      summary: View a marketplace profile
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicProfile" }
+        "404": { description: Profile not found }
+  /profiles/{profileId}/reviews:
+    get:
+      operationId: getProfileReviews
+      tags: [profiles]
+      summary: List reviews for a profile
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Review" }
+  /listings:
+    get:
+      operationId: getListings
+      tags: [listings]
+      summary: Search agricultural waste listings
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: wasteType
+          in: query
+          schema: { type: string }
+        - name: city
+          in: query
+          schema: { type: string }
+        - name: minQuantity
+          in: query
+          schema: { type: number, minimum: 0 }
+        - name: maxPrice
+          in: query
+          schema: { type: number, minimum: 0 }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [recent, price, quantity] }
+        - name: mine
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Matching listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Listing" }
+    post:
+      operationId: createListing
+      tags: [listings]
+      summary: Publish a waste listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ListingInput" }
+      responses:
+        "201":
+          description: Created listing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+  /listings/{listingId}:
+    get:
+      operationId: getListing
+      tags: [listings]
+      summary: View a listing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Listing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+        "404": { description: Listing not found }
+    put:
+      operationId: updateListing
+      tags: [listings]
+      summary: Update an owned listing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ListingUpdate" }
+      responses:
+        "200":
+          description: Updated listing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+    delete:
+      operationId: deleteListing
+      tags: [listings]
+      summary: Remove an owned listing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Listing removed }
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get role-aware dashboard metrics and recent activity
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardSummary" }
+  /buyers:
+    get:
+      operationId: getNearbyBuyers
+      tags: [market]
+      summary: Find industries sourcing agricultural waste
+      parameters:
+        - name: wasteType
+          in: query
+          schema: { type: string }
+        - name: city
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Nearby buyer profiles and their sourcing needs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Buyer" }
+  /recommendations:
+    get:
+      operationId: getRecommendations
+      tags: [market]
+      summary: Get relevant buyer or supplier recommendations
+      responses:
+        "200":
+          description: Recommendations based on current marketplace data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Recommendations" }
+  /market/demand:
+    get:
+      operationId: getMarketDemand
+      tags: [market]
+      summary: View demand by waste type
+      responses:
+        "200":
+          description: Waste-type demand indicators
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DemandItem" }
+  /offers:
+    get:
+      operationId: getOffers
+      tags: [offers]
+      summary: List offers visible to the signed-in user
+      responses:
+        "200":
+          description: Offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Offer" }
+    post:
+      operationId: createOffer
+      tags: [offers]
+      summary: Make an offer on a listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OfferInput" }
+      responses:
+        "201":
+          description: Offer created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Offer" }
+  /offers/{offerId}:
+    put:
+      operationId: respondToOffer
+      tags: [offers]
+      summary: Accept, reject, or counter an offer
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OfferUpdate" }
+      responses:
+        "200":
+          description: Updated offer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Offer" }
+  /orders:
+    get:
+      operationId: getOrders
+      tags: [orders]
+      summary: List the signed-in user's orders
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Order" }
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Start a buy-now purchase request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrderInput" }
+      responses:
+        "201":
+          description: Purchase request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: View order and pickup details
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+    put:
+      operationId: updateOrder
+      tags: [orders]
+      summary: Confirm, schedule pickup, or advance an order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrderUpdate" }
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: List notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Notification" }
+  /notifications/{notificationId}/read:
+    put:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notification" }
+  /ai/classify-waste:
+    post:
+      operationId: classifyWaste
+      tags: [ai]
+      summary: Identify agricultural residue from a photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AIClassifyInput" }
+      responses:
+        "200":
+          description: Classification result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Classification" }
+  /ai/price-estimate:
+    post:
+      operationId: estimatePrice
+      tags: [ai]
+      summary: Estimate a local listing price
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PriceEstimateInput" }
+      responses:
+        "200":
+          description: Suggested range and price
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PriceEstimate" }
+  /reviews:
+    post:
+      operationId: createReview
+      tags: [profiles]
+      summary: Review the other participant after an order is completed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReviewInput" }
+      responses:
+        "201":
+          description: Review submitted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Review" }
+  /favorites:
+    get:
+      operationId: getFavorites
+      tags: [listings]
+      summary: List saved listings
+      responses:
+        "200":
+          description: Saved listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Listing" }
+  /favorites/{listingId}:
+    put:
+      operationId: saveFavorite
+      tags: [listings]
+      summary: Save a listing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Saved status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FavoriteStatus" }
+    delete:
+      operationId: removeFavorite
+      tags: [listings]
+      summary: Remove a saved listing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Saved status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FavoriteStatus" }
+  /admin/statistics:
+    get:
+      operationId: getAdminStatistics
+      tags: [admin]
+      summary: Get platform statistics
+      responses:
+        "200":
+          description: Platform metrics
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminStatistics" }
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      tags: [admin]
+      summary: List marketplace users for administration
+      responses:
+        "200":
+          description: User profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Profile" }
+  /admin/users/{profileId}/verification:
+    put:
+      operationId: setUserVerification
+      tags: [admin]
+      summary: Verify or unverify a participant
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VerificationInput" }
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a private upload URL for a listing photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UploadRequest" }
+      responses:
+        "200":
+          description: Presigned upload URL and object path
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UploadResponse" }
 components:
   schemas:
     HealthStatus:
@@ -33,4 +567,369 @@ components:
           type: string
       required:
         - status
+    Profile:
+      type: object
+      required: [id, name, email, role, verified, city, state, rating, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        phone: { type: ["string", "null"] }
+        role: { type: string, enum: [farmer, industry, admin] }
+        verified: { type: boolean }
+        city: { type: string }
+        state: { type: string }
+        farmSize: { type: ["number", "null"] }
+        companyName: { type: ["string", "null"] }
+        industryType: { type: ["string", "null"] }
+        requiredWasteTypes:
+          type: array
+          items: { type: string }
+        rating: { type: number }
+        createdAt: { type: string, format: date-time }
+    PublicProfile:
+      type: object
+      required: [id, name, role, verified, city, state, rating, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        role: { type: string, enum: [farmer, industry, admin] }
+        verified: { type: boolean }
+        city: { type: string }
+        state: { type: string }
+        farmSize: { type: ["number", "null"] }
+        companyName: { type: ["string", "null"] }
+        industryType: { type: ["string", "null"] }
+        requiredWasteTypes:
+          type: array
+          items: { type: string }
+        rating: { type: number }
+        createdAt: { type: string, format: date-time }
+    ProfileInput:
+      type: object
+      required: [name, phone, role, city, state]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 100 }
+        phone: { type: string, minLength: 7, maxLength: 30 }
+        role: { type: string, enum: [farmer, industry] }
+        city: { type: string, minLength: 2, maxLength: 100 }
+        state: { type: string, minLength: 2, maxLength: 100 }
+        farmSize: { type: ["number", "null"], minimum: 0 }
+        companyName: { type: ["string", "null"], maxLength: 150 }
+        industryType: { type: ["string", "null"], maxLength: 100 }
+        requiredWasteTypes:
+          type: array
+          items: { type: string }
+    Listing:
+      type: object
+      required: [id, farmerId, farmerName, farmerVerified, wasteType, quantity, unit, price, location, city, state, description, status, uses, createdAt]
+      properties:
+        id: { type: integer }
+        farmerId: { type: integer }
+        farmerName: { type: string }
+        farmerVerified: { type: boolean }
+        wasteType: { type: string }
+        quantity: { type: number }
+        unit: { type: string, enum: [kg, ton, quintal] }
+        price: { type: number }
+        location: { type: string }
+        city: { type: string }
+        state: { type: string }
+        availableDate: { type: ["string", "null"], format: date }
+        description: { type: string }
+        imageUrl: { type: ["string", "null"] }
+        aiConfidence: { type: ["number", "null"] }
+        status: { type: string, enum: [available, reserved, sold] }
+        uses:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+        distanceKm: { type: ["number", "null"] }
+    ListingInput:
+      type: object
+      required: [wasteType, quantity, unit, price, location, city, state, description]
+      properties:
+        wasteType: { type: string, minLength: 2, maxLength: 80 }
+        quantity: { type: number, exclusiveMinimum: 0 }
+        unit: { type: string, enum: [kg, ton, quintal] }
+        price: { type: number, minimum: 0 }
+        location: { type: string, minLength: 2, maxLength: 200 }
+        city: { type: string, minLength: 2, maxLength: 100 }
+        state: { type: string, minLength: 2, maxLength: 100 }
+        availableDate: { type: ["string", "null"], format: date }
+        description: { type: string, maxLength: 2000 }
+        imageUrl: { type: ["string", "null"] }
+        aiConfidence: { type: ["number", "null"], minimum: 0, maximum: 1 }
+        uses:
+          type: array
+          items: { type: string }
+    ListingUpdate:
+      type: object
+      properties:
+        wasteType: { type: string, minLength: 2, maxLength: 80 }
+        quantity: { type: number, exclusiveMinimum: 0 }
+        unit: { type: string, enum: [kg, ton, quintal] }
+        price: { type: number, minimum: 0 }
+        location: { type: string, minLength: 2, maxLength: 200 }
+        city: { type: string, minLength: 2, maxLength: 100 }
+        state: { type: string, minLength: 2, maxLength: 100 }
+        availableDate: { type: ["string", "null"], format: date }
+        description: { type: string, maxLength: 2000 }
+        imageUrl: { type: ["string", "null"] }
+        aiConfidence: { type: ["number", "null"], minimum: 0, maximum: 1 }
+        status: { type: string, enum: [available, reserved, sold] }
+    Buyer:
+      type: object
+      required: [id, name, companyName, city, state, verified, requiredWasteTypes, quantityNeeded, offerPerTon, pickupAvailable, rating]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        companyName: { type: string }
+        city: { type: string }
+        state: { type: string }
+        verified: { type: boolean }
+        requiredWasteTypes:
+          type: array
+          items: { type: string }
+        quantityNeeded: { type: number }
+        offerPerTon: { type: number }
+        pickupAvailable: { type: boolean }
+        rating: { type: number }
+        distanceKm: { type: ["number", "null"] }
+    Offer:
+      type: object
+      required: [id, listingId, listingTitle, buyerId, buyerName, farmerId, quantity, unit, price, status, message, createdAt]
+      properties:
+        id: { type: integer }
+        listingId: { type: integer }
+        listingTitle: { type: string }
+        buyerId: { type: integer }
+        buyerName: { type: string }
+        farmerId: { type: integer }
+        quantity: { type: number }
+        unit: { type: string, enum: [kg, ton, quintal] }
+        price: { type: number }
+        status: { type: string, enum: [pending, accepted, rejected, countered, expired] }
+        message: { type: string }
+        pickupDate: { type: ["string", "null"], format: date }
+        counterPrice: { type: ["number", "null"] }
+        orderId: { type: ["integer", "null"] }
+        createdAt: { type: string, format: date-time }
+    OfferInput:
+      type: object
+      required: [listingId, quantity, price]
+      properties:
+        listingId: { type: integer }
+        quantity: { type: number, exclusiveMinimum: 0 }
+        price: { type: number, minimum: 0 }
+        pickupDate: { type: ["string", "null"], format: date }
+        message: { type: string, maxLength: 1000 }
+    OfferUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [accepted, rejected, countered, pending] }
+        counterPrice: { type: ["number", "null"], minimum: 0 }
+        message: { type: string, maxLength: 1000 }
+    Order:
+      type: object
+      required: [id, listingId, listingTitle, buyerId, buyerName, farmerId, farmerName, quantity, unit, totalAmount, status, createdAt, transportRequired]
+      properties:
+        id: { type: integer }
+        listingId: { type: integer }
+        listingTitle: { type: string }
+        buyerId: { type: integer }
+        buyerName: { type: string }
+        farmerId: { type: integer }
+        farmerName: { type: string }
+        quantity: { type: number }
+        unit: { type: string, enum: [kg, ton, quintal] }
+        totalAmount: { type: number }
+        status: { type: string, enum: [pending, confirmed, pickup_scheduled, picked_up, completed, cancelled] }
+        createdAt: { type: string, format: date-time }
+        pickupDate: { type: ["string", "null"], format: date }
+        pickupTime: { type: ["string", "null"] }
+        pickupAddress: { type: ["string", "null"] }
+        contactNumber: { type: ["string", "null"] }
+        transportRequired: { type: boolean }
+    OrderInput:
+      type: object
+      required: [listingId, quantity]
+      properties:
+        listingId: { type: integer }
+        quantity: { type: number, exclusiveMinimum: 0 }
+        pickupDate: { type: ["string", "null"], format: date }
+    OrderUpdate:
+      type: object
+      properties:
+        status: { type: string, enum: [confirmed, pickup_scheduled, picked_up, completed, cancelled] }
+        pickupDate: { type: ["string", "null"], format: date }
+        pickupTime: { type: ["string", "null"] }
+        pickupAddress: { type: ["string", "null"], maxLength: 300 }
+        contactNumber: { type: ["string", "null"], maxLength: 30 }
+        transportRequired: { type: boolean }
+    Notification:
+      type: object
+      required: [id, title, message, read, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        message: { type: string }
+        read: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        href: { type: ["string", "null"] }
+    MetricPoint:
+      type: object
+      required: [label, value]
+      properties:
+        label: { type: string }
+        value: { type: number }
+    Activity:
+      type: object
+      required: [id, title, detail, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        detail: { type: string }
+        createdAt: { type: string, format: date-time }
+        href: { type: ["string", "null"] }
+    DashboardSummary:
+      type: object
+      required: [role, activeListings, totalOffers, completedOrders, totalEarnings, pendingOffers, activeOrders, totalQuantity, totalSpent, wasteReusedKg, unreadNotifications, monthly, breakdown, activity]
+      properties:
+        role: { type: string, enum: [farmer, industry, admin] }
+        activeListings: { type: integer }
+        totalOffers: { type: integer }
+        completedOrders: { type: integer }
+        totalEarnings: { type: number }
+        pendingOffers: { type: integer }
+        activeOrders: { type: integer }
+        totalQuantity: { type: number }
+        totalSpent: { type: number }
+        wasteReusedKg: { type: number }
+        unreadNotifications: { type: integer }
+        monthly:
+          type: array
+          items: { $ref: "#/components/schemas/MetricPoint" }
+        breakdown:
+          type: array
+          items: { $ref: "#/components/schemas/MetricPoint" }
+        activity:
+          type: array
+          items: { $ref: "#/components/schemas/Activity" }
+    Recommendations:
+      type: object
+      required: [insights, listings, buyers]
+      properties:
+        insights:
+          type: array
+          items: { type: string }
+        listings:
+          type: array
+          items: { $ref: "#/components/schemas/Listing" }
+        buyers:
+          type: array
+          items: { $ref: "#/components/schemas/Buyer" }
+    DemandItem:
+      type: object
+      required: [wasteType, demand, listingCount, buyerCount, averagePrice]
+      properties:
+        wasteType: { type: string }
+        demand: { type: string, enum: [low, medium, high, very_high] }
+        listingCount: { type: integer }
+        buyerCount: { type: integer }
+        averagePrice: { type: number }
+    Classification:
+      type: object
+      required: [wasteType, confidence, description, possibleUses, alternatives, mode]
+      properties:
+        wasteType: { type: string }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        description: { type: string }
+        possibleUses:
+          type: array
+          items: { type: string }
+        alternatives:
+          type: array
+          items: { type: string }
+        mode: { type: string, enum: [ai, demo] }
+    AIClassifyInput:
+      type: object
+      required: [imageData]
+      properties:
+        imageData: { type: string, minLength: 20 }
+        fileName: { type: ["string", "null"] }
+    PriceEstimate:
+      type: object
+      required: [minimumPrice, maximumPrice, suggestedPrice, explanation, disclaimer, mode]
+      properties:
+        minimumPrice: { type: number }
+        maximumPrice: { type: number }
+        suggestedPrice: { type: number }
+        explanation: { type: string }
+        disclaimer: { type: string }
+        mode: { type: string, enum: [ai, demo] }
+    PriceEstimateInput:
+      type: object
+      required: [wasteType, quantity, unit, location]
+      properties:
+        wasteType: { type: string }
+        quantity: { type: number, exclusiveMinimum: 0 }
+        unit: { type: string, enum: [kg, ton, quintal] }
+        location: { type: string }
+        quality: { type: ["string", "null"] }
+    Review:
+      type: object
+      required: [id, fromName, toProfileId, rating, comment, createdAt]
+      properties:
+        id: { type: integer }
+        fromName: { type: string }
+        toProfileId: { type: integer }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string }
+        createdAt: { type: string, format: date-time }
+    ReviewInput:
+      type: object
+      required: [orderId, rating, comment]
+      properties:
+        orderId: { type: integer }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string, minLength: 3, maxLength: 1000 }
+    FavoriteStatus:
+      type: object
+      required: [favorited]
+      properties:
+        favorited: { type: boolean }
+    AdminStatistics:
+      type: object
+      required: [totalUsers, farmers, industries, listings, orders, wasteReusedKg, transactions, recentUsers]
+      properties:
+        totalUsers: { type: integer }
+        farmers: { type: integer }
+        industries: { type: integer }
+        listings: { type: integer }
+        orders: { type: integer }
+        wasteReusedKg: { type: number }
+        transactions: { type: number }
+        recentUsers:
+          type: array
+          items: { $ref: "#/components/schemas/Profile" }
+    VerificationInput:
+      type: object
+      required: [verified]
+      properties:
+        verified: { type: boolean }
+    UploadRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        size: { type: integer, minimum: 1, maximum: 15000000 }
+        contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+    UploadResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL: { type: string, format: uri }
+        objectPath: { type: string }
 
