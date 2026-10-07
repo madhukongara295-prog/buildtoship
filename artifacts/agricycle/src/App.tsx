@@ -364,7 +364,7 @@ function NewListing() {
   const [price, setPrice] = useState('');
   const [city, setCity] = useState(profile?.city || '');
   const [state, setState] = useState(profile?.state || '');
-  const [location, setLocation] = useState('');
+  const [locationField, setLocationField] = useState('');
   const [availableDate, setAvailableDate] = useState('');
   const [description, setDescription] = useState('');
   const [confidence, setConfidence] = useState<number | null>(null);
@@ -386,13 +386,13 @@ function NewListing() {
   }
   function priceGuide() {
     const q = Number(quantity);
-    if (!wasteType || !(q > 0) || !location) { toast.error('Add material, quantity and pickup location to estimate a price.'); return; }
-    estimate.mutate({ data: { wasteType, quantity: q, unit, location } }, { onSuccess: result => { setPrice(String(result.suggestedPrice)); toast.success(`Suggested price: ${money(result.suggestedPrice)} per ${unit}.`); }, onError: e => toast.error(tx(e)) });
+    if (!wasteType || !(q > 0) || !locationField) { toast.error('Add material, quantity and pickup location to estimate a price.'); return; }
+    estimate.mutate({ data: { wasteType, quantity: q, unit, location: locationField } }, { onSuccess: result => { setPrice(String(result.suggestedPrice)); toast.success(`Suggested price: ${money(result.suggestedPrice)} per ${unit}.`); }, onError: e => toast.error(tx(e)) });
   }
   function publish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const q = Number(quantity), p = Number(price);
-    if (!wasteType.trim() || !(q > 0) || !(p >= 0) || !location.trim() || !city.trim() || !state.trim()) { toast.error('Complete material, quantity, price and location before publishing.'); return; }
+    if (!wasteType.trim() || !(q > 0) || !(p >= 0) || !locationField.trim() || !city.trim() || !state.trim()) { toast.error('Complete material, quantity, price and location before publishing.'); return; }
     const data: ListingInput = { wasteType, quantity: q, unit, price: p, location, city, state, availableDate: availableDate || null, description, imageUrl: imageUrl || null, aiConfidence: confidence, uses };
     create.mutate({ data }, { onSuccess: listing => { toast.success(`Your ${listing.wasteType} listing is now live.`); invalidate(getGetListingsQueryKey({ mine: true }), getGetListingsQueryKey(), getGetDashboardQueryKey(), getGetMarketDemandQueryKey()); setLocation('/farmer/listings'); }, onError: e => toast.error(tx(e)) });
   }
@@ -415,7 +415,7 @@ function NewListing() {
           <label className="text-xs font-semibold text-[#566456]">Price per {unit}<div className="mt-1.5 flex gap-2"><span className="grid w-10 shrink-0 place-items-center rounded-xl bg-[#f0eee3] text-sm text-[#66705f]">₹</span><input className={inputClass} type="number" min="0" step="any" required value={price} onChange={e => setPrice(e.target.value)} placeholder="Set your price" data-testid="input-listing-price" /><button type="button" className="shrink-0 rounded-xl border border-[#d9dccb] px-3 text-[10px] font-semibold text-[#51684e] hover:bg-[#eff1e8]" disabled={estimate.isPending} onClick={priceGuide} data-testid="button-estimate-price">{estimate.isPending ? 'Estimating' : 'Price guide'}</button></div></label>
         </div>
         <div className="mt-4 rounded-xl border border-[#e5e3d8] bg-[#f7f6ef] p-3 text-[11px] text-[#70776c]"><span className="font-semibold text-[#495e48]">A guide, not a rule.</span> Estimates use current local signals; you are always free to set your own price.</div>
-        <div className="mt-5 border-t border-[#ece9df] pt-5"><p className="font-mono text-[9px] uppercase tracking-[.16em] text-[#858879]">PICKUP LOCATION</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-[#566456]">Village, mandal or pickup point<input className={`${inputClass} mt-1.5`} required value={location} onChange={e => setLocation(e.target.value)} placeholder="Near the co-operative mill" data-testid="input-listing-location" /></label><label className="text-xs font-semibold text-[#566456]">City / district<input className={`${inputClass} mt-1.5`} required value={city} onChange={e => setCity(e.target.value)} placeholder="City or district" data-testid="input-listing-city" /></label><label className="text-xs font-semibold text-[#566456]">State<input className={`${inputClass} mt-1.5`} required value={state} onChange={e => setState(e.target.value)} placeholder="State" data-testid="input-listing-state" /></label><label className="text-xs font-semibold text-[#566456]">Available from<input className={`${inputClass} mt-1.5`} type="date" value={availableDate} onChange={e => setAvailableDate(e.target.value)} data-testid="input-listing-date" /></label></div></div>
+        <div className="mt-5 border-t border-[#ece9df] pt-5"><p className="font-mono text-[9px] uppercase tracking-[.16em] text-[#858879]">PICKUP LOCATION</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-[#566456]">Village, mandal or pickup point<input className={`${inputClass} mt-1.5`} required value={location} onChange={e => setPrice(e.target.value)} placeholder="Near the co-operative mill" data-testid="input-listing-location" /></label><label className="text-xs font-semibold text-[#566456]">City / district<input className={`${inputClass} mt-1.5`} required value={city} onChange={e => setCity(e.target.value)} placeholder="City or district" data-testid="input-listing-city" /></label><label className="text-xs font-semibold text-[#566456]">State<input className={`${inputClass} mt-1.5`} required value={state} onChange={e => setState(e.target.value)} placeholder="State" data-testid="input-listing-state" /></label><label className="text-xs font-semibold text-[#566456]">Available from<input className={`${inputClass} mt-1.5`} type="date" value={availableDate} onChange={e => setAvailableDate(e.target.value)} data-testid="input-listing-date" /></label></div></div>
         <label className="mt-4 block text-xs font-semibold text-[#566456]">A note for buyers<textarea className={`${inputClass} mt-1.5`} value={description} onChange={e => setDescription(e.target.value)} rows={3} maxLength={2000} placeholder="Describe dryness, storage and how the material can be collected." data-testid="input-listing-description" /></label>
         <button className={`${primaryBtn} mt-6 w-full`} type="submit" disabled={create.isPending || upload.isPending || classify.isPending} data-testid="button-publish-listing">{create.isPending ? 'Publishing your listing…' : 'Publish listing'} <ArrowRight size={16} /></button>
       </section>
