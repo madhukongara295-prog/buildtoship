@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "AgriCycle"
+description = "A two-sided agricultural waste marketplace connecting farmers who list crop residues with industries that buy and reuse them, with AI-assisted classification and pricing, offers, pickups, and impact tracking."
+version = "1.0.0"
+id = "artifacts/agricycle"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19057
+
+[services.development]
+run = "pnpm --filter @workspace/agricycle run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/agricycle", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/agricycle/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19057"
+BASE_PATH = "/"

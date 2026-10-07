@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriCycle – Agricultural Waste Marketplace</title>
+  <meta name="description" content="Turn agricultural waste into opportunity. Direct marketplace connecting Indian farmers with industries to trade straw, husks, and crop residues.">
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN for rapid responsive layout -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f2f7f3',
+              100: '#e1ede4',
+              200: '#c5decb',
+              500: '#2e6a47',
+              700: '#235237',
+              900: '#1c3d2b',
+              950: '#0e2117',
+            },
+            harvest: {
+              DEFAULT: '#e2b038',
+              hover: '#cf9d26',
+              light: '#fdf6e6',
+            },
+            parchment: '#f8f6f0',
+            earth: '#795536',
+          },
+          fontFamily: {
+            heading: ['Outfit', 'sans-serif'],
+            sans: ['DM Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Design Tokens & Animations -->
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="bg-grain min-h-screen flex flex-col text-[#1f3326]">
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Main Application Container -->
+  <div id="app" class="flex-1 flex flex-col">
+    <div class="p-12 text-center text-brand-900 font-semibold animate-pulse">
+      Loading AgriCycle Marketplace...
+    </div>
+  </div>
+
+  <!-- Modal Target -->
+  <div id="modal-container"></div>
+
+  <!-- Floating Judge Hackathon Demo Assistant -->
+  <div id="judge-walkthrough" class="judge-bar hidden md:flex">
+    <div class="flex items-center gap-3">
+      <span class="bg-harvest text-brand-950 font-bold px-2 py-0.5 rounded text-xs flex items-center gap-1">
+        <i data-lucide="award" class="w-3.5 h-3.5"></i> Hackathon Judge Mode
+      </span>
+      <span id="judge-step-text" class="text-white/90 font-medium">Step 1 of 8: Farmer Logged In</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="btn-judge-prev" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-xs transition">
+        &larr; Prev
+      </button>
+      <button id="btn-judge-next" class="px-3 py-1 bg-harvest hover:bg-harvest-hover text-brand-950 font-bold rounded text-xs flex items-center gap-1 transition">
+        <span>Advance Demo Step</span> &rarr;
+      </button>
+      <button id="btn-judge-reset" class="px-2 py-1 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded text-xs transition" title="Reset Demo Data">
+        Reset
+      </button>
+      <button id="btn-judge-toggle" class="px-2 py-1 text-white/60 hover:text-white rounded text-xs transition" title="Minimize">
+        &times;
+      </button>
+    </div>
+  </div>
+
+  <!-- Data & Application Logic -->
+  <script src="/data.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
