@@ -207,11 +207,180 @@ function HomeRedirect() {
   if (isLoaded && isSignedIn && profile === null) return <Redirect to="/setup" />;
   return <Landing />;
 }
+function SignUpForm() {
+  const [, setLocation] = useLocation();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState<'farmer' | 'industry'>('farmer');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (name.trim().length < 2) {
+      toast.error('Please enter your full name.');
+      return;
+    }
+    if (!email.includes('@')) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+    if (phone.trim().length < 7) {
+      toast.error('Please enter a valid phone number.');
+      return;
+    }
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match.');
+      return;
+    }
+
+    setSuccess(true);
+    toast.success('Account created successfully!');
+    setTimeout(() => {
+      setLocation(role === 'farmer' ? '/farmer/dashboard' : '/industry/dashboard');
+    }, 1200);
+  }
+
+  return (
+    <div className="px-4 pb-4 pt-1">
+      {success ? (
+        <div className="rounded-2xl border border-[#b8cfba] bg-[#eef5ee] p-6 text-center text-[#2a5135]" data-testid="signup-success">
+          <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-[#d6e7d7] text-[#2a5135]">
+            <Check size={24} />
+          </div>
+          <h3 className="font-display text-xl font-bold">Account created successfully!</h3>
+          <p className="mt-1 text-xs text-[#526a57]">Welcome to AgriCycle. Entering your {role} space…</p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-3" data-testid="form-signup">
+          <label className="block text-xs font-semibold text-[#566456]">
+            Full Name
+            <input
+              type="text"
+              className={`${inputClass} mt-1`}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Ramesh Patel"
+              required
+              data-testid="input-signup-name"
+            />
+          </label>
+
+          <label className="block text-xs font-semibold text-[#566456]">
+            Email
+            <input
+              type="email"
+              className={`${inputClass} mt-1`}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              required
+              data-testid="input-signup-email"
+            />
+          </label>
+
+          <label className="block text-xs font-semibold text-[#566456]">
+            Phone Number
+            <input
+              type="tel"
+              className={`${inputClass} mt-1`}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+91 98765 43210"
+              required
+              data-testid="input-signup-phone"
+            />
+          </label>
+
+          <div>
+            <span className="block text-xs font-semibold text-[#566456]">Role</span>
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-semibold transition ${
+                  role === 'farmer'
+                    ? 'border-[#27513c] bg-[#27513c] text-[#fbfaf5]'
+                    : 'border-[#dedaca] bg-[#fffef9] text-[#4d5c4c] hover:bg-[#f6f4eb]'
+                }`}
+                onClick={() => setRole('farmer')}
+                data-testid="button-role-farmer"
+              >
+                🌾 Farmer
+              </button>
+              <button
+                type="button"
+                className={`flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-semibold transition ${
+                  role === 'industry'
+                    ? 'border-[#27513c] bg-[#27513c] text-[#fbfaf5]'
+                    : 'border-[#dedaca] bg-[#fffef9] text-[#4d5c4c] hover:bg-[#f6f4eb]'
+                }`}
+                onClick={() => setRole('industry')}
+                data-testid="button-role-industry"
+              >
+                🏭 Industry
+              </button>
+            </div>
+          </div>
+
+          <label className="block text-xs font-semibold text-[#566456]">
+            Password
+            <input
+              type="password"
+              className={`${inputClass} mt-1`}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              required
+              minLength={6}
+              data-testid="input-signup-password"
+            />
+          </label>
+
+          <label className="block text-xs font-semibold text-[#566456]">
+            Confirm Password
+            <input
+              type="password"
+              className={`${inputClass} mt-1`}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter your password"
+              required
+              minLength={6}
+              data-testid="input-signup-confirm-password"
+            />
+          </label>
+
+          <button
+            type="submit"
+            className={`${primaryBtn} mt-2 w-full`}
+            data-testid="button-create-account"
+          >
+            Create Account <ArrowRight size={15} />
+          </button>
+
+          <p className="pt-1 text-center text-xs text-[#6e7467]">
+            Already have an account?{' '}
+            <Link href="/sign-in" className="font-semibold text-[#27513c] underline" data-testid="link-to-signin">
+              Sign in
+            </Link>
+          </p>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   return <div className="grain flex min-h-[100dvh] flex-col bg-[#e9e7db]"><div className="mx-auto w-full max-w-[1280px] px-5 py-6"><Brand /></div><main className="mx-auto grid w-full max-w-[1100px] flex-1 items-center gap-8 px-5 pb-12 md:grid-cols-[1fr_440px]">
     <div className="hidden max-w-lg md:block"><p className="font-mono text-[10px] uppercase tracking-[.22em] text-[#707b67]">A BETTER HARVEST CYCLE</p><h1 className="mt-4 font-display text-6xl leading-[1.04] tracking-[-.04em] text-[#294a35]">Good things grow when we trade fairly.</h1><p className="mt-5 text-base leading-7 text-[#687266]">Join growers and businesses making agricultural residue part of the next useful thing.</p><div className="mt-8 flex gap-3 text-xs text-[#60705c]"><BadgeCheck size={16} /> Clear terms <span className="text-[#a8aa9c]">/</span> Local matches <span className="text-[#a8aa9c]">/</span> Real reuse</div></div>
-    <div className="rounded-[26px] border border-[#e1ddcf] bg-[#fbfaf5] p-2 shadow-xl shadow-[#475138]/10"><div className="mb-1 px-5 pt-4"><p className="font-display text-2xl text-[#2a4935]">{mode === 'sign-in' ? 'Welcome back.' : 'Make a little room for what’s next.'}</p><p className="mt-1 text-sm text-[#7a7d70]">{mode === 'sign-in' ? 'Sign in to continue to your marketplace.' : 'Create your account, then choose your side of the cycle.'}</p></div>
-      <div className="px-1 pb-2 pt-3">{mode === 'sign-in' ? <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /> : <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />}</div>
+    <div className="rounded-[26px] border border-[#e1ddcf] bg-[#fbfaf5] p-2 shadow-xl shadow-[#475138]/10"><div className="mb-1 px-5 pt-4"><p className="font-display text-2xl text-[#2a4935]">{mode === 'sign-in' ? 'Welcome back.' : 'Join AgriCycle'}</p><p className="mt-1 text-sm text-[#7a7d70]">{mode === 'sign-in' ? 'Sign in to continue to your marketplace.' : 'Create your account, then choose your side of the cycle.'}</p></div>
+      <div className="px-1 pb-2 pt-3">{mode === 'sign-in' ? <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /> : <SignUpForm />}</div>
     </div>
   </main><div className="pb-6 text-center text-[10px] text-[#808477]">AGRICYCLE · BUILT AROUND THE WAY MATERIALS MOVE</div></div>;
 }
