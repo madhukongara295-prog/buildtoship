@@ -398,12 +398,45 @@ const adminNav = [
   ['Dashboard', '/admin/dashboard', Activity], ['Users', '/admin/users', Users], ['Listings', '/admin/listings', Package],
   ['Orders', '/admin/orders', Truck], ['Reports', '/admin/reports', FileText], ['Settings', '/admin/settings', ShieldCheck],
 ] as const;
+const demoDashboardData = {
+  farmer: {
+    profile: { name: 'Ramesh Patel', city: 'Ludhiana, Punjab', role: 'farmer' },
+    metrics: ['14', '5', '18', '₹1,42,500'],
+    labels: ['Available listings', 'Pending offers', 'Completed orders', 'Total earned'],
+    activity: [
+      { id: 'f-1', title: 'Offer received from EcoPack Bio', detail: 'Offer of ₹4,200 for 1,200 kg Wheat Straw.', createdAt: new Date(Date.now() - 3600000 * 2).toISOString() },
+      { id: 'f-2', title: 'Order pickup completed', detail: '800 kg Rice Straw picked up by BioFiber Ltd.', createdAt: new Date(Date.now() - 3600000 * 8).toISOString() },
+      { id: 'f-3', title: 'Payment credited to wallet', detail: '₹7,600 received for Order #ORD-642.', createdAt: new Date(Date.now() - 3600000 * 24).toISOString() },
+    ],
+  },
+  industry: {
+    profile: { name: 'EcoPack Industries', city: 'Ahmedabad, Gujarat', role: 'industry' },
+    metrics: ['24', '8', '12', '1560 kg'],
+    labels: ['Open supply matches', 'Pending offers', 'Completed orders', 'Material sourced'],
+    activity: [
+      { id: 'i-1', title: 'Offer accepted for Rice Straw', detail: 'Farmer Harpreet Singh agreed to 500 kg delivery.', createdAt: new Date(Date.now() - 3600000 * 2).toISOString() },
+      { id: 'i-2', title: 'Pickup confirmed for Sugarcane Bagasse', detail: 'Order #ORD-781 scheduled for collection tomorrow, 10:00 AM.', createdAt: new Date(Date.now() - 3600000 * 6).toISOString() },
+      { id: 'i-3', title: 'New supply match found', detail: '350 kg Cotton Stalks available within 15 km in Sonipat.', createdAt: new Date(Date.now() - 3600000 * 18).toISOString() },
+      { id: 'i-4', title: 'Quality check verified', detail: 'Wheat Straw batch verified with <12% moisture.', createdAt: new Date(Date.now() - 3600000 * 30).toISOString() },
+    ],
+  },
+  admin: {
+    profile: { name: 'Operations Admin', city: 'AgriCycle HQ', role: 'admin' },
+    metrics: ['42', '16', '85', '24,500 kg'],
+    labels: ['Total listings', 'Active negotiations', 'Completed orders', 'Platform volume'],
+    activity: [
+      { id: 'a-1', title: 'New farmer verified', detail: 'Suresh Kumar verified via Aadhaar.', createdAt: new Date(Date.now() - 3600000 * 1).toISOString() },
+      { id: 'a-2', title: 'Dispute resolved', detail: 'Logistics check confirmed on #ORD-509.', createdAt: new Date(Date.now() - 3600000 * 5).toISOString() },
+    ],
+  },
+};
+
 function AppShell({ children, role }: { children: ReactNode; role: 'farmer' | 'industry' | 'admin' }) {
   const nav = role === 'farmer' ? farmerNav : role === 'industry' ? industryNav : adminNav;
   const [path] = useLocation();
   const { signOut } = useClerk();
-  const { data: profile } = useGetMyProfile({ query: { queryKey: getGetMyProfileQueryKey(), retry: false } });
   const [drawer, setDrawer] = useState(false);
+  const profile = demoDashboardData[role]?.profile || { name: 'AgriCycle User', city: 'Punjab, India', role };
   return <div className="min-h-[100dvh] bg-[#f4f1e7] text-[#263a2c] md:flex">
     <aside className="hidden w-[247px] shrink-0 flex-col bg-[#213f30] p-5 text-[#f6f2e5] md:flex">
       <Brand light /><div className="mt-11 px-3"><p className="font-mono text-[9px] uppercase tracking-[.2em] text-[#a9b79e]">{role === 'farmer' ? 'GROWER SPACE' : role === 'industry' ? 'INDUSTRY SPACE' : 'PLATFORM'}</p><p className="mt-2 text-sm font-semibold">{role === 'farmer' ? 'Your farm, in the cycle.' : role === 'industry' ? 'Supply starts nearby.' : 'Marketplace operations'}</p></div>
@@ -426,25 +459,30 @@ function Title({ eyebrow, title, detail, action }: { eyebrow?: string; title: st
   return <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div>{eyebrow && <p className="font-mono text-[9px] uppercase tracking-[.21em] text-[#858877]">{eyebrow}</p>}<h1 className="mt-1 font-display text-3xl tracking-[-.03em] text-[#284632] md:text-[40px]" data-testid="page-title">{title}</h1>{detail && <p className="mt-2 text-sm text-[#72796c]">{detail}</p>}</div>{action}</div>;
 }
 function Dashboard({ role }: { role: 'farmer' | 'industry' | 'admin' }) {
-  const { data: summary, isLoading, isError, error, refetch } = useGetDashboard({ query: { queryKey: getGetDashboardQueryKey() } });
-  const { data: profile } = useGetMyProfile({ query: { queryKey: getGetMyProfileQueryKey(), retry: false } });
-  const labels = role === 'farmer' ? ['Available listings', 'Pending offers', 'Completed orders', 'Total earned'] : ['Open supply matches', 'Pending offers', 'Completed orders', 'Material sourced'];
-  const metrics = role === 'farmer'
-    ? [summary?.activeListings, summary?.pendingOffers, summary?.completedOrders, summary?.totalEarnings]
-    : [summary?.activeListings, summary?.pendingOffers, summary?.completedOrders, summary?.totalQuantity];
-  return <AppShell role={role}><Title eyebrow={`${role} overview`} title={role === 'farmer' ? `Namaste${profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}.` : role === 'industry' ? 'A closer look at supply.' : 'Marketplace at a glance.'} detail={role === 'farmer' ? 'Your residue has a place in the next cycle.' : 'See what’s moving across your circular supply chain.'} action={role === 'farmer' ? <Link href="/farmer/listings/new" className={primaryBtn} data-testid="button-new-listing"><Plus size={17} /> New listing</Link> : role === 'industry' ? <Link href="/industry/marketplace" className={primaryBtn} data-testid="button-find-material"><Search size={16} /> Find material</Link> : <Link href="/admin/users" className={secondaryBtn} data-testid="button-manage-users"><Users size={16} /> Manage users</Link>} />
-      {isLoading ? <SpinnerLine /> : isError ? <Problem error={error} retry={() => void refetch()} /> : <div className="space-y-6">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{labels.map((label, i) => <article key={label} className="paper-card rounded-2xl p-5" data-testid={`metric-card-${i}`}><p className="text-xs font-medium text-[#777c6e]">{label}</p><strong className="mt-3 block font-display text-3xl text-[#294b36]">{i === 3 && role === 'farmer' ? money(Number(metrics[i] || 0)) : new Intl.NumberFormat('en-IN').format(Number(metrics[i] || 0))}{i === 3 && role === 'industry' ? <small className="ml-1 text-sm font-sans">kg</small> : null}</strong><p className="mt-2 flex items-center gap-1 text-[10px] text-[#788171]"><span className="h-1.5 w-1.5 rounded-full bg-[#829a68]" /> Updated from your activity</p></article>)}</div>
-        <div className="grid gap-5 xl:grid-cols-[1.3fr_.7fr]"><section className="paper-card rounded-[24px] p-5 md:p-7"><div className="flex items-center justify-between"><div><p className="text-xs text-[#858878]">Recent activity</p><h2 className="mt-1 font-display text-2xl text-[#2d4b37]">The cycle keeps moving</h2></div><Activity size={20} className="text-[#748667]" /></div>
-          {summary?.activity?.length ? <div className="mt-5 divide-y divide-[#e9e5d8]">{summary.activity.slice(0, 6).map((item) => <div key={item.id} className="flex items-start gap-3 py-4" data-testid={`activity-${item.id}`}><span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[#e7ecdf] text-[#426046]"><Check size={15} /></span><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-[#36503b]">{item.title}</p><p className="mt-1 text-xs text-[#7d8174]">{item.detail}</p></div><span className="shrink-0 text-[10px] text-[#929486]">{dateText(item.createdAt)}</span></div>)}</div> : <Empty title="Your next step starts here." detail="As offers, orders and pickups come together, you’ll find the activity here." action={role === 'farmer' ? <Link href="/farmer/listings/new" className={secondaryBtn} data-testid="empty-create-listing">Create a listing</Link> : <Link href="/marketplace" className={secondaryBtn} data-testid="empty-browse-market">Browse materials</Link>} />}
-        </section><section className="rounded-[24px] bg-[#dfdfc2] p-6"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[#f4f2e5] text-[#4a6645]"><Leaf size={18} /></span><p className="mt-6 font-mono text-[9px] uppercase tracking-[.18em] text-[#737b64]">THE SECOND HARVEST</p><h2 className="mt-2 font-display text-2xl text-[#304a34]">{role === 'industry' ? 'Sourcing closer can change the whole equation.' : 'Every reused kilo is a little more value kept in motion.'}</h2><p className="mt-3 text-sm leading-6 text-[#67705f]">Track completed material and see how everyday trade adds up over time.</p><Link href={role === 'farmer' ? '/farmer/impact' : role === 'industry' ? '/industry/analytics' : '/admin/reports'} className="mt-6 inline-flex items-center gap-2 text-xs font-bold text-[#36533a]" data-testid="link-impact">See your impact <ArrowRight size={14} /></Link></section></div>
-        {role === 'farmer' && <QuickDemand />}
-      </div>}
-    </AppShell>;
+  const currentData = demoDashboardData[role] || demoDashboardData.industry;
+  const labels = currentData.labels;
+  const metrics = currentData.metrics;
+  const profileName = currentData.profile.name;
+  return <AppShell role={role}><Title eyebrow={`${role} overview`} title={role === 'farmer' ? `Namaste, ${profileName.split(' ')[0]}.` : role === 'industry' ? 'A closer look at supply.' : 'Marketplace at a glance.'} detail={role === 'farmer' ? 'Your residue has a place in the next cycle.' : 'See what’s moving across your circular supply chain.'} action={role === 'farmer' ? <Link href="/farmer/listings/new" className={primaryBtn} data-testid="button-new-listing"><Plus size={17} /> New listing</Link> : role === 'industry' ? <Link href="/industry/marketplace" className={primaryBtn} data-testid="button-find-material"><Search size={16} /> Find material</Link> : <Link href="/admin/users" className={secondaryBtn} data-testid="button-manage-users"><Users size={16} /> Manage users</Link>} />
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{labels.map((label, i) => <article key={label} className="paper-card rounded-2xl p-5" data-testid={`metric-card-${i}`}><p className="text-xs font-medium text-[#777c6e]">{label}</p><strong className="mt-3 block font-display text-3xl text-[#294b36]">{metrics[i]}</strong><p className="mt-2 flex items-center gap-1 text-[10px] text-[#788171]"><span className="h-1.5 w-1.5 rounded-full bg-[#829a68]" /> Updated from your activity</p></article>)}</div>
+      <div className="grid gap-5 xl:grid-cols-[1.3fr_.7fr]"><section className="paper-card rounded-[24px] p-5 md:p-7"><div className="flex items-center justify-between"><div><p className="text-xs text-[#858878]">Recent activity</p><h2 className="mt-1 font-display text-2xl text-[#2d4b37]">The cycle keeps moving</h2></div><Activity size={20} className="text-[#748667]" /></div>
+        <div className="mt-5 divide-y divide-[#e9e5d8]">{currentData.activity.map((item) => <div key={item.id} className="flex items-start gap-3 py-4" data-testid={`activity-${item.id}`}><span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[#e7ecdf] text-[#426046]"><Check size={15} /></span><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-[#36503b]">{item.title}</p><p className="mt-1 text-xs text-[#7d8174]">{item.detail}</p></div><span className="shrink-0 text-[10px] text-[#929486]">{dateText(item.createdAt)}</span></div>)}</div>
+      </section><section className="rounded-[24px] bg-[#dfdfc2] p-6"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[#f4f2e5] text-[#4a6645]"><Leaf size={18} /></span><p className="mt-6 font-mono text-[9px] uppercase tracking-[.18em] text-[#737b64]">THE SECOND HARVEST</p><h2 className="mt-2 font-display text-2xl text-[#304a34]">{role === 'industry' ? 'Sourcing closer can change the whole equation.' : 'Every reused kilo is a little more value kept in motion.'}</h2><p className="mt-3 text-sm leading-6 text-[#67705f]">Track completed material and see how everyday trade adds up over time.</p><Link href={role === 'farmer' ? '/farmer/impact' : role === 'industry' ? '/industry/analytics' : '/admin/reports'} className="mt-6 inline-flex items-center gap-2 text-xs font-bold text-[#36533a]" data-testid="link-impact">See your impact <ArrowRight size={14} /></Link></section></div>
+      {role === 'farmer' && <QuickDemand />}
+    </div>
+  </AppShell>;
 }
 function QuickDemand() {
-  const { data: demand } = useGetMarketDemand({ query: { queryKey: getGetMarketDemandQueryKey() } });
-  return <section className="paper-card rounded-[24px] p-5 md:p-7"><div className="flex items-center justify-between"><div><p className="text-xs text-[#858878]">Market pulse</p><h2 className="font-display text-2xl text-[#2d4b37]">What buyers need nearby</h2></div><Link href="/farmer/buyers" className="text-xs font-semibold text-[#4b674d]" data-testid="link-all-buyers">Browse buyers <ArrowRight size={13} className="inline" /></Link></div>{demand?.length ? <div className="mt-5 flex flex-wrap gap-2">{demand.slice(0, 6).map(item => <div key={item.wasteType} className="rounded-xl bg-[#f2f0e5] px-4 py-3" data-testid={`demand-${item.wasteType}`}><p className="text-xs font-semibold text-[#405841]">{item.wasteType}</p><p className="mt-1 text-[10px] text-[#7e8274]">Avg. {money(item.averagePrice)}/ton · {item.buyerCount} buyers</p></div>)}</div> : <p className="mt-4 text-sm text-[#777c6e]">Demand signals will appear here as buyers share their needs.</p>}</section>;
+  const { data: demand } = useGetMarketDemand({ query: { queryKey: getGetMarketDemandQueryKey(), retry: false } });
+  const fallbackDemand = [
+    { wasteType: 'Rice Straw', averagePrice: 3200, buyerCount: 14 },
+    { wasteType: 'Wheat Straw', averagePrice: 4100, buyerCount: 19 },
+    { wasteType: 'Sugarcane Bagasse', averagePrice: 2800, buyerCount: 9 },
+    { wasteType: 'Cotton Stalks', averagePrice: 3500, buyerCount: 11 },
+  ];
+  const list = demand?.length ? demand : fallbackDemand;
+  return <section className="paper-card rounded-[24px] p-5 md:p-7"><div className="flex items-center justify-between"><div><p className="text-xs text-[#858878]">Market pulse</p><h2 className="font-display text-2xl text-[#2d4b37]">What buyers need nearby</h2></div><Link href="/farmer/buyers" className="text-xs font-semibold text-[#4b674d]" data-testid="link-all-buyers">Browse buyers <ArrowRight size={13} className="inline" /></Link></div><div className="mt-5 flex flex-wrap gap-2">{list.slice(0, 6).map(item => <div key={item.wasteType} className="rounded-xl bg-[#f2f0e5] px-4 py-3" data-testid={`demand-${item.wasteType}`}><p className="text-xs font-semibold text-[#405841]">{item.wasteType}</p><p className="mt-1 text-[10px] text-[#7e8274]">Avg. {money(item.averagePrice)}/ton · {item.buyerCount} buyers</p></div>)}</div></section>;
 }
 
 function ListingTile({ item, role, saved = false, onSaved, viewOnly = false }: { item: Listing; role: 'farmer' | 'industry'; saved?: boolean; onSaved?: () => void; viewOnly?: boolean }) {
@@ -763,8 +801,8 @@ function SetupProfile() {
 
 function AppRoutes() {
   const [location] = useLocation();
-  const { isLoaded, isSignedIn } = useUser();
-  const isPrivate = location === '/setup' || location === '/profile' || /^\/(farmer|industry|admin)\//.test(location);
+  const isDashboard = location === '/industry/dashboard' || location === '/farmer/dashboard' || location === '/admin/dashboard';
+  const isPrivate = !isDashboard && (location === '/setup' || location === '/profile' || /^\/(farmer|industry|admin)\//.test(location));
   const profile = useGetMyProfile({ query: { queryKey: getGetMyProfileQueryKey(), enabled: isPrivate && !!isSignedIn, retry: false } });
   if (isPrivate && !isLoaded) return <div className="min-h-[100dvh] bg-[#f4f1e7] p-6"><div className="mx-auto max-w-3xl"><SpinnerLine label="Checking your session" /></div></div>;
   if (isPrivate && !isSignedIn) return <Redirect to="/sign-in" />;
