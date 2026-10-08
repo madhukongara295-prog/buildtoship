@@ -336,6 +336,30 @@
   ],
   "listings": [
     {
+      "id": 1791400353801,
+      "farmerId": 1,
+      "farmerName": "Ramesh Patel",
+      "farmerVerified": true,
+      "wasteType": "Rice Husk",
+      "quantity": 10,
+      "unit": "ton",
+      "price": 3200,
+      "city": "Kurnool",
+      "state": "Andhra Pradesh",
+      "location": "Kurnool Agricultural Yard",
+      "distanceKm": 10,
+      "availableDate": "2026-10-15",
+      "description": "Freshly harvested, dry stored under covered shed.",
+      "imageUrl": "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80",
+      "aiConfidence": 0.95,
+      "status": "available",
+      "uses": [
+        "Biomass Pellet Fuel",
+        "Biochar"
+      ],
+      "createdAt": "2026-10-07T19:12:33.801Z"
+    },
+    {
       "id": 101,
       "farmerId": 1,
       "farmerName": "Ramesh Patel",
