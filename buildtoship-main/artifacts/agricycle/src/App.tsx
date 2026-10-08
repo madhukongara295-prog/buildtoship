@@ -65,7 +65,7 @@ const inputClass = 'w-full rounded-xl border border-[#dedaca] bg-[#fffef9] px-4 
 const wasteTypes = ['Rice straw', 'Wheat straw', 'Sugarcane bagasse', 'Corn stalks', 'Cotton stalks', 'Groundnut shells', 'Coconut husk', 'Mustard residue'];
 
 function tx(error: unknown) { return error instanceof Error ? error.message : 'Something went wrong. Please try again.'; }
-function invalidate(...keys: readonly unknown[][]) { keys.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey })); }
+function invalidate(...keys: (readonly unknown[])[]) { keys.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey })); }
 function money(value: number) { return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(value)}`; }
 function dateText(value?: string | null) { return value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'To be agreed'; }
 function statusTone(status: string) {
@@ -801,6 +801,7 @@ function SetupProfile() {
 
 function AppRoutes() {
   const [location] = useLocation();
+  const { isLoaded, isSignedIn } = useUser();
   const isDashboard = location === '/industry/dashboard' || location === '/farmer/dashboard' || location === '/admin/dashboard';
   const isPrivate = !isDashboard && (location === '/setup' || location === '/profile' || /^\/(farmer|industry|admin)\//.test(location));
   const profile = useGetMyProfile({ query: { queryKey: getGetMyProfileQueryKey(), enabled: isPrivate && !!isSignedIn, retry: false } });

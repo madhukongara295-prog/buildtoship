@@ -1,3 +1,5 @@
+import type { Listing, Offer, Order } from './generated/api.schemas';
+
 // AgriCycle In-Browser Mock Database & State Engine
 // Zero-backend fallback for standalone static deployments (Vercel, GitHub Pages)
 
@@ -61,7 +63,7 @@ export const SEED_USERS: MockUser[] = [
   }
 ];
 
-export const INITIAL_LISTINGS = [
+export const INITIAL_LISTINGS: Listing[] = [
   {
     id: 101,
     farmerId: 1,
@@ -358,7 +360,7 @@ export const INITIAL_LISTINGS = [
   }
 ];
 
-export const INITIAL_OFFERS = [
+export const INITIAL_OFFERS: Offer[] = [
   {
     id: 701,
     listingId: 101,
@@ -395,7 +397,7 @@ export const INITIAL_OFFERS = [
   }
 ];
 
-export const INITIAL_ORDERS = [
+export const INITIAL_ORDERS: Order[] = [
   {
     id: 801,
     listingId: 102,
@@ -548,11 +550,11 @@ export function setActiveUser(user: MockUser): void {
   setStorage('agricycle_active_user', user);
 }
 
-export function getMockListings(): typeof INITIAL_LISTINGS {
+export function getMockListings(): Listing[] {
   return getStorage('agricycle_listings', INITIAL_LISTINGS);
 }
 
-export function saveMockListings(items: typeof INITIAL_LISTINGS): void {
+export function saveMockListings(items: Listing[]): void {
   setStorage('agricycle_listings', items);
 }
 
@@ -564,19 +566,19 @@ export function saveMockFavorites(ids: number[]): void {
   setStorage('agricycle_favorites', ids);
 }
 
-export function getMockOffers(): typeof INITIAL_OFFERS {
+export function getMockOffers(): Offer[] {
   return getStorage('agricycle_offers', INITIAL_OFFERS);
 }
 
-export function saveMockOffers(items: typeof INITIAL_OFFERS): void {
+export function saveMockOffers(items: Offer[]): void {
   setStorage('agricycle_offers', items);
 }
 
-export function getMockOrders(): typeof INITIAL_ORDERS {
+export function getMockOrders(): Order[] {
   return getStorage('agricycle_orders', INITIAL_ORDERS);
 }
 
-export function saveMockOrders(items: typeof INITIAL_ORDERS): void {
+export function saveMockOrders(items: Order[]): void {
   setStorage('agricycle_orders', items);
 }
 

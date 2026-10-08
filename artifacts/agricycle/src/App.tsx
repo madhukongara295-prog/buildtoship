@@ -1,7 +1,6 @@
-import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, type FormEvent, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { ClerkProvider, SignIn, SignUp, useClerk, useUser } from '@clerk/react';
-import { publishableKeyFromHost } from '@clerk/react/internal';
+import { ClerkProvider, SignIn, useClerk, useUser } from '@clerk/react';
 import { enUS } from '@clerk/localizations';
 import { shadcn } from '@clerk/themes';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -31,9 +30,23 @@ import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } fr
 import { Toaster, toast } from 'sonner';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 25_000, retry: 1 } } });
-const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) || import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_y2xlci5hZ3JpY3ljbGUuZGVtbyQ';
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
+const demoMode = import.meta.env.VITE_DEMO_MODE === 'true' || (import.meta.env.DEV && !clerkPubKey);
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+type AuthSession = {
+  isLoaded: boolean;
+  isSignedIn: boolean;
+  user: { firstName?: string | null; lastName?: string | null } | null;
+  signOut: (options?: { redirectUrl?: string }) => Promise<void>;
+};
+const AuthSessionContext = createContext<AuthSession | null>(null);
+
+function useAuthSession() {
+  const session = useContext(AuthSessionContext);
+  if (!session) throw new Error('Authentication session is unavailable.');
+  return session;
+}
 const clerkAppearance = {
   theme: shadcn,
   cssLayerName: 'clerk',
@@ -65,7 +78,7 @@ const inputClass = 'w-full rounded-xl border border-[#dedaca] bg-[#fffef9] px-4 
 const wasteTypes = ['Rice straw', 'Wheat straw', 'Sugarcane bagasse', 'Corn stalks', 'Cotton stalks', 'Groundnut shells', 'Coconut husk', 'Mustard residue'];
 
 function tx(error: unknown) { return error instanceof Error ? error.message : 'Something went wrong. Please try again.'; }
-function invalidate(...keys: readonly unknown[][]) { keys.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey })); }
+function invalidate(...keys: (readonly unknown[])[]) { keys.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey })); }
 function money(value: number) { return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(value)}`; }
 function dateText(value?: string | null) { return value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'To be agreed'; }
 function statusTone(status: string) {
@@ -201,10 +214,10 @@ function InfoPage({ kind }: { kind: 'about' | 'how' }) {
 }
 
 function HomeRedirect() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded } = useAuthSession();
   const { data: profile } = useGetMyProfile({ query: { queryKey: getGetMyProfileQueryKey(), enabled: !!isSignedIn, retry: false } });
-  if (isLoaded && isSignedIn && profile) return <Redirect to={`/${profile.role}/dashboard`} />;
-  if (isLoaded && isSignedIn && profile === null) return <Redirect to="/setup" />;
+  if (!demoMode && isLoaded && isSignedIn && profile) return <Redirect to={`/${profile.role}/dashboard`} />;
+  if (!demoMode && isLoaded && isSignedIn && profile === null) return <Redirect to="/setup" />;
   return <Landing />;
 }
 function SignUpForm() {
@@ -377,10 +390,13 @@ function SignUpForm() {
 }
 
 function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
+  const { isLoaded, isSignedIn } = useAuthSession();
+  const { data: profile } = useGetMyProfile({ query: { queryKey: getGetMyProfileQueryKey(), enabled: isLoaded && isSignedIn, retry: false } });
+  if (!demoMode && isLoaded && isSignedIn && profile) return <Redirect to={`/${profile.role}/dashboard`} />;
   return <div className="grain flex min-h-[100dvh] flex-col bg-[#e9e7db]"><div className="mx-auto w-full max-w-[1280px] px-5 py-6"><Brand /></div><main className="mx-auto grid w-full max-w-[1100px] flex-1 items-center gap-8 px-5 pb-12 md:grid-cols-[1fr_440px]">
     <div className="hidden max-w-lg md:block"><p className="font-mono text-[10px] uppercase tracking-[.22em] text-[#707b67]">A BETTER HARVEST CYCLE</p><h1 className="mt-4 font-display text-6xl leading-[1.04] tracking-[-.04em] text-[#294a35]">Good things grow when we trade fairly.</h1><p className="mt-5 text-base leading-7 text-[#687266]">Join growers and businesses making agricultural residue part of the next useful thing.</p><div className="mt-8 flex gap-3 text-xs text-[#60705c]"><BadgeCheck size={16} /> Clear terms <span className="text-[#a8aa9c]">/</span> Local matches <span className="text-[#a8aa9c]">/</span> Real reuse</div></div>
     <div className="rounded-[26px] border border-[#e1ddcf] bg-[#fbfaf5] p-2 shadow-xl shadow-[#475138]/10"><div className="mb-1 px-5 pt-4"><p className="font-display text-2xl text-[#2a4935]">{mode === 'sign-in' ? 'Welcome back.' : 'Join AgriCycle'}</p><p className="mt-1 text-sm text-[#7a7d70]">{mode === 'sign-in' ? 'Sign in to continue to your marketplace.' : 'Create your account, then choose your side of the cycle.'}</p></div>
-      <div className="px-1 pb-2 pt-3">{mode === 'sign-in' ? <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /> : <SignUpForm />}</div>
+      <div className="px-1 pb-2 pt-3">{mode === 'sign-in' ? clerkPubKey && !demoMode ? <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /> : demoMode ? <div className="space-y-3 rounded-xl bg-[#f2f0e6] p-5 text-center"><p className="text-sm text-[#657064]">Local demo access is enabled.</p><Link className={`${primaryBtn} w-full`} href="/industry/dashboard">Open industry dashboard</Link><Link className={`${secondaryBtn} w-full`} href="/farmer/dashboard">Open farmer dashboard</Link></div> : <p className="rounded-xl bg-[#f8ebe7] p-5 text-sm text-[#704135]">Authentication is not configured for this deployment.</p> : <SignUpForm />}</div>
     </div>
   </main><div className="pb-6 text-center text-[10px] text-[#808477]">AGRICYCLE · BUILT AROUND THE WAY MATERIALS MOVE</div></div>;
 }
@@ -434,7 +450,7 @@ const demoDashboardData = {
 function AppShell({ children, role }: { children: ReactNode; role: 'farmer' | 'industry' | 'admin' }) {
   const nav = role === 'farmer' ? farmerNav : role === 'industry' ? industryNav : adminNav;
   const [path] = useLocation();
-  const { signOut } = useClerk();
+  const { signOut } = useAuthSession();
   const [drawer, setDrawer] = useState(false);
   const profile = demoDashboardData[role]?.profile || { name: 'AgriCycle User', city: 'Punjab, India', role };
   return <div className="min-h-[100dvh] bg-[#f4f1e7] text-[#263a2c] md:flex">
@@ -498,7 +514,7 @@ function ListingTile({ item, role, saved = false, onSaved, viewOnly = false }: {
   const updateListing = useUpdateListing();
   const deleteListing = useDeleteListing();
   const itemQuery = useGetListing(item.id, { query: { queryKey: getGetListingQueryKey(item.id), enabled: false } });
-  const { isSignedIn } = useUser();
+  const { isSignedIn } = useAuthSession();
   const [, setLocation] = useLocation();
   function done(kind: 'offer' | 'order') {
     toast.success(kind === 'offer' ? 'Offer sent to the farmer.' : 'Purchase request sent.');
@@ -536,13 +552,13 @@ function Marketplace({ role = 'industry', path = '/marketplace', readOnly = fals
   const [city, setCity] = useState('');
   const [type, setType] = useState('');
   const [sort, setSort] = useState<'recent' | 'price' | 'quantity'>('recent');
-  const [savedOnly, setSavedOnly] = useState(path === '/industry/suppliers');
+  const [savedOnly, setSavedOnly] = useState(false);
   const params = useMemo(() => ({ search: search.trim() || undefined, city: city.trim() || undefined, wasteType: type || undefined, sort, mine: path === '/farmer/listings' ? true : undefined }), [search, city, type, sort, path]);
   const query = useGetListings(params, { query: { queryKey: getGetListingsQueryKey(params) } });
   const favorites = useGetFavorites({ query: { queryKey: getGetFavoritesQueryKey() } });
   const items = (savedOnly ? favorites.data : query.data) as Listing[] | undefined;
   const savedIds = new Set(((favorites.data || []) as Listing[]).map(listing => listing.id));
-  const title = path === '/farmer/listings' ? 'Your listed material' : path === '/industry/suppliers' ? 'Saved suppliers’ listings' : readOnly ? 'Marketplace listings' : 'Material near your next product';
+  const title = path === '/farmer/listings' ? 'Your listed material' : path === '/industry/suppliers' ? 'Available suppliers' : readOnly ? 'Marketplace listings' : 'Material near your next product';
   const action = role === 'farmer' && path === '/farmer/listings' ? <Link href="/farmer/listings/new" className={primaryBtn} data-testid="button-create-listing"><Plus size={16} /> Add a listing</Link> : undefined;
   return <AppShell role={role}><Title eyebrow={role === 'farmer' ? 'YOUR MATERIAL' : 'NEARBY MATERIAL'} title={title} detail={path === '/farmer/listings' ? 'Manage availability and see what’s moving.' : 'Search agricultural residue that’s ready for another use.'} action={action} />
     <div className="mb-6 rounded-[22px] border border-[#e1ddcf] bg-[#ebe9dd] p-3 md:p-4"><div className="grid gap-2 md:grid-cols-[1.5fr_1fr_1fr_auto]">
@@ -631,12 +647,15 @@ function NewListing() {
 
 function Offers({ role }: { role: 'farmer' | 'industry' }) {
   const query = useGetOffers({ query: { queryKey: getGetOffersQueryKey() } });
+  const listings = useGetListings(undefined, { query: { queryKey: getGetListingsQueryKey() } });
   const respond = useRespondToOffer();
+  const listingsById = new Map((Array.isArray(listings.data) ? listings.data : []).map(listing => [listing.id, listing]));
+  const offers = Array.isArray(query.data) ? query.data : [];
   function reply(offer: Offer, status: 'accepted' | 'rejected') {
     respond.mutate({ offerId: offer.id, data: { status } }, { onSuccess: () => { toast.success(status === 'accepted' ? 'Offer accepted. Now confirm pickup details in orders.' : 'Offer declined.'); invalidate(getGetOffersQueryKey(), getGetOrdersQueryKey(), getGetDashboardQueryKey()); }, onError: e => toast.error(tx(e)) });
   }
   return <AppShell role={role}><Title eyebrow="DIRECT TRADE" title={role === 'farmer' ? 'Offers for your material' : 'Your offers'} detail="An offer is the start of a conversation. Agree the details before pickup." />
-    {query.isLoading ? <SpinnerLine /> : query.isError ? <Problem error={query.error} retry={() => void query.refetch()} /> : query.data?.length ? <div className="space-y-3">{query.data.map(offer => <article key={offer.id} className="paper-card rounded-[22px] p-5 md:p-6" data-testid={`offer-card-${offer.id}`}><div className="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#e7ecdf] text-[#46634a]"><FileText size={19} /></span><div><div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl text-[#2a4935]">{offer.listingTitle}</h2><Badge tone={statusTone(offer.status)}>{offer.status}</Badge></div><p className="mt-1 text-xs text-[#798074]">{role === 'farmer' ? `From ${offer.buyerName}` : 'Offer made on'} · {offer.quantity} {offer.unit} · <strong>{money(offer.price)} / unit</strong></p><p className="mt-2 max-w-2xl text-xs leading-5 text-[#71786d]">{offer.message || 'No note was added.'}</p><p className="mt-2 text-[10px] text-[#929486]">Pickup requested: {dateText(offer.pickupDate)} · Sent {dateText(offer.createdAt)}</p></div></div>
+    {query.isLoading ? <SpinnerLine /> : query.isError ? <Problem error={query.error} retry={() => void query.refetch()} /> : offers.length ? <div className="space-y-3">{offers.map(offer => <article key={offer.id} className="paper-card rounded-[22px] p-5 md:p-6" data-testid={`offer-card-${offer.id}`}><div className="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#e7ecdf] text-[#46634a]"><FileText size={19} /></span><div><div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl text-[#2a4935]">{offer.listingTitle || 'Agricultural material'}</h2><Badge tone={statusTone(offer.status || 'pending')}>{offer.status || 'pending'}</Badge></div><p className="mt-1 text-xs text-[#798074]">{role === 'farmer' ? `From ${offer.buyerName || 'Buyer'}` : `From ${listingsById.get(offer.listingId)?.farmerName || `Supplier #${offer.farmerId}`}`} · {offer.quantity || 0} {offer.unit || 'kg'} · <strong>{money(Number(offer.price) || 0)} / unit</strong></p><p className="mt-2 max-w-2xl text-xs leading-5 text-[#71786d]">{offer.message || 'No note was added.'}</p><p className="mt-2 text-[10px] text-[#929486]">Pickup requested: {dateText(offer.pickupDate)} · Sent {dateText(offer.createdAt)}</p></div></div>
         {role === 'farmer' && offer.status === 'pending' && <div className="flex gap-2"><button className={secondaryBtn} onClick={() => reply(offer, 'rejected')} disabled={respond.isPending} data-testid={`button-reject-offer-${offer.id}`}>Decline</button><button className={primaryBtn} onClick={() => reply(offer, 'accepted')} disabled={respond.isPending} data-testid={`button-accept-offer-${offer.id}`}><Check size={15} /> Accept offer</button></div>}
       </div></article>)}</div> : <Empty title="No offers on the table." detail={role === 'farmer' ? 'When a buyer is interested in one of your listings, their offer will appear here.' : 'Browse available agricultural residue and send a clear offer to its grower.'} action={<Link href="/marketplace" className={secondaryBtn} data-testid="link-offer-marketplace">Explore materials</Link>} />}
   </AppShell>;
@@ -675,7 +694,7 @@ function Orders({ role }: { role: 'farmer' | 'industry' }) {
 }
 function OrderStatusDetail({ orderId }: { orderId: number }) {
   const order = useGetOrder(orderId, { query: { queryKey: getGetOrderQueryKey(orderId) } });
-  return <span className="sr-only" data-testid={`order-detail-status-${orderId}`}>{order.data?.status || (order.isLoading ? 'Loading order details' : 'Order detail unavailable')}</span>;
+  return <p className="mb-3 text-[10px] font-mono text-[#85897b]" data-testid={`order-detail-status-${orderId}`}>Order #{orderId} · {order.data?.status || (order.isLoading ? 'Loading order details' : 'Order detail unavailable')}</p>;
 }
 function ReviewForm({ order, role }: { order: Order; role: 'farmer' | 'industry' }) {
   const review = useCreateReview();
@@ -715,6 +734,35 @@ function SimpleDataPage({ role, type }: { role: 'farmer' | 'industry' | 'admin';
   return <AppShell role={role}><Title eyebrow={type === 'impact' ? 'GOOD MATERIAL IN MOTION' : 'YOUR MARKETPLACE'} title={title[type]} detail={type === 'impact' ? 'A tangible view of material finding its next use.' : 'A practical summary of your marketplace activity.'} />
     {dash.isLoading ? <SpinnerLine /> : dash.isError ? <Problem error={dash.error} retry={() => void dash.refetch()} /> : metrics.length ? <><div className="grid gap-4 sm:grid-cols-3">{metrics.map(([label, value], i) => <article key={label} className="paper-card rounded-[22px] p-6" data-testid={`summary-${type}-${i}`}><p className="text-xs text-[#7f8276]">{label}</p><p className="mt-3 font-display text-3xl text-[#294a35]">{value}</p></article>)}</div>
       <div className="mt-6 grid gap-5 xl:grid-cols-[1fr_.8fr]"><section className="paper-card rounded-[24px] p-6"><p className="font-mono text-[9px] uppercase tracking-[.18em] text-[#828578]">RECENT PROGRESS</p><h2 className="mt-2 font-display text-2xl text-[#2b4b35]">Every completed order counts.</h2><div className="mt-6 space-y-3">{(dash.data?.monthly || []).map(point => <div key={point.label} className="grid grid-cols-[75px_1fr_56px] items-center gap-3 text-xs"><span className="text-[#71786c]">{point.label}</span><div className="h-2 rounded-full bg-[#e8e6db]"><div className="h-2 rounded-full bg-[#799064]" style={{ width: `${Math.max(5, Math.min(100, point.value))}%` }} /></div><span className="text-right font-mono text-[10px] text-[#697364]">{point.value.toLocaleString('en-IN')}</span></div>)}</div>{!dash.data?.monthly?.length && <p className="mt-5 text-xs text-[#85897c]">Monthly activity will build here as you trade.</p>}</section><aside className="rounded-[24px] bg-[#e1e2ce] p-6"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[#f7f5e9] text-[#4a684c]"><Leaf size={19} /></span><h2 className="mt-5 font-display text-2xl text-[#304a35]">{type === 'analytics' ? 'A closer supply chain starts with a better local match.' : 'A second harvest is good business.'}</h2><p className="mt-3 text-sm leading-6 text-[#6c7567]">Keep making clear agreements, plan pickups ahead and bring more useful material back into circulation.</p></aside></div></> : type === 'settings' ? <section className="paper-card max-w-2xl rounded-[24px] p-6"><h2 className="font-display text-2xl text-[#294a35]">Marketplace settings</h2><p className="mt-2 text-sm leading-6 text-[#73796d]">Operational controls are managed through your AgriCycle service configuration. No unsupported settings are changed from this screen.</p><div className="mt-5 flex items-center gap-3 rounded-xl bg-[#f0eee3] p-4 text-xs text-[#556650]"><ShieldCheck size={17} /> Sign-in protection and role permissions remain enabled.</div></section> : <Empty title="Reports are taking shape." detail="Platform totals and user activity will appear here as the marketplace grows." />}
+  </AppShell>;
+}
+
+function IndustryAnalytics() {
+  const ordersQuery = useGetOrders({ query: { queryKey: getGetOrdersQueryKey() } });
+  const listingsQuery = useGetListings(undefined, { query: { queryKey: getGetListingsQueryKey() } });
+  const orders = Array.isArray(ordersQuery.data) ? ordersQuery.data : [];
+  const listings = Array.isArray(listingsQuery.data) ? listingsQuery.data : [];
+  const totalWasteKg = orders.reduce((total, order) => {
+    const quantity = Number(order?.quantity) || 0;
+    const multiplier = order?.unit === 'ton' ? 1000 : order?.unit === 'quintal' ? 100 : 1;
+    return total + quantity * multiplier;
+  }, 0);
+  const totalSpent = orders.reduce((total, order) => total + (Number(order?.totalAmount) || 0), 0);
+  const activeSuppliers = new Set(listings.filter(listing => listing?.status === 'available').map(listing => listing?.farmerId).filter(id => typeof id === 'number' && Number.isFinite(id))).size;
+  const completedOrders = orders.filter(order => order?.status === 'completed').length;
+  const pendingOrders = orders.filter(order => order?.status === 'pending').length;
+  const metrics: [string, string][] = [
+    ['Total orders', String(orders.length)],
+    ['Total waste purchased', `${totalWasteKg.toLocaleString('en-IN')} kg`],
+    ['Total amount spent', money(totalSpent)],
+    ['Active suppliers', String(activeSuppliers)],
+    ['Completed orders', String(completedOrders)],
+    ['Pending orders', String(pendingOrders)],
+  ];
+  const loading = ordersQuery.isLoading || listingsQuery.isLoading;
+  const error = ordersQuery.isError ? ordersQuery.error : listingsQuery.isError ? listingsQuery.error : null;
+  return <AppShell role="industry"><Title eyebrow="YOUR MARKETPLACE" title="Sourcing analytics" detail="A practical view of purchased material, suppliers and order progress." />
+    {loading ? <SpinnerLine /> : error ? <Problem error={error} retry={() => { void ordersQuery.refetch(); void listingsQuery.refetch(); }} /> : <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{metrics.map(([label, value], index) => <article key={label} className="paper-card rounded-2xl p-5" data-testid={`industry-analytics-${index}`}><p className="text-xs font-medium text-[#777c6e]">{label}</p><p className="mt-3 font-display text-3xl text-[#294b36]">{value}</p></article>)}</div>}
   </AppShell>;
 }
 
@@ -767,7 +815,7 @@ function ProfilePage() {
 }
 
 function SetupProfile() {
-  const { user, isLoaded, isSignedIn } = useUser();
+  const { user, isLoaded, isSignedIn } = useAuthSession();
   const profile = useGetMyProfile({ query: { queryKey: getGetMyProfileQueryKey(), enabled: !!isSignedIn, retry: false } });
   const save = useSaveMyProfile();
   const [, setLocation] = useLocation();
@@ -801,6 +849,7 @@ function SetupProfile() {
 
 function AppRoutes() {
   const [location] = useLocation();
+  const { isLoaded, isSignedIn } = useAuthSession();
   const isDashboard = location === '/industry/dashboard' || location === '/farmer/dashboard' || location === '/admin/dashboard';
   const isPrivate = !isDashboard && (location === '/setup' || location === '/profile' || /^\/(farmer|industry|admin)\//.test(location));
   const profile = useGetMyProfile({ query: { queryKey: getGetMyProfileQueryKey(), enabled: isPrivate && !!isSignedIn, retry: false } });
@@ -811,7 +860,7 @@ function AppRoutes() {
   if (isPrivate && isSignedIn && location !== '/setup' && !profile.data) return <Redirect to="/setup" />;
   if (location === '/setup' && profile.data) return <Redirect to={`/${profile.data.role}/dashboard`} />;
   const roleRoute = location.match(/^\/(farmer|industry|admin)\//)?.[1];
-  if (roleRoute && profile.data && profile.data.role !== roleRoute) return <Redirect to={`/${profile.data.role}/dashboard`} />;
+  if (!demoMode && roleRoute && profile.data && profile.data.role !== roleRoute) return <Redirect to={`/${profile.data.role}/dashboard`} />;
   return <ErrorBoundary resetKey={location}><Switch>
     <Route path="/" component={HomeRedirect} />
     <Route path="/marketplace" component={() => <Marketplace path="/marketplace" />} />
@@ -834,7 +883,7 @@ function AppRoutes() {
     <Route path="/industry/offers" component={() => <Offers role="industry" />} />
     <Route path="/industry/orders" component={() => <Orders role="industry" />} />
     <Route path="/industry/suppliers" component={() => <Marketplace role="industry" path="/industry/suppliers" />} />
-    <Route path="/industry/analytics" component={() => <SimpleDataPage role="industry" type="analytics" />} />
+    <Route path="/industry/analytics" component={IndustryAnalytics} />
     <Route path="/admin/dashboard" component={AdminDashboard} />
     <Route path="/admin/users" component={AdminUsers} />
     <Route path="/admin/listings" component={() => <Marketplace role="industry" path="/admin/listings" />} />
@@ -856,11 +905,24 @@ function ClerkCacheBridge() {
   }), [addListener, client]);
   return null;
 }
-function ClerkApp() {
+function ClerkAuthBridge() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const { signOut } = useClerk();
+  return <AuthSessionContext.Provider value={{ isLoaded, isSignedIn: Boolean(isSignedIn), user: user ?? null, signOut }}><ClerkCacheBridge /><AppRoutes /></AuthSessionContext.Provider>;
+}
+function DemoAuthBridge({ children }: { children: ReactNode }) {
+  const session: AuthSession = { isLoaded: true, isSignedIn: true, user: { firstName: 'AgriCycle', lastName: 'Demo' }, signOut: async () => {} };
+  return <AuthSessionContext.Provider value={session}>{children}</AuthSessionContext.Provider>;
+}
+function UnavailableAuthBridge({ children }: { children: ReactNode }) {
+  const session: AuthSession = { isLoaded: true, isSignedIn: false, user: null, signOut: async () => {} };
+  return <AuthSessionContext.Provider value={session}>{children}</AuthSessionContext.Provider>;
+}
+function ClerkApp({ publishableKey }: { publishableKey: string }) {
   const [, setLocation] = useLocation();
   const stripBase = (path: string) => basePath && path.startsWith(basePath) ? path.slice(basePath.length) || '/' : path;
   return <ClerkProvider
-    publishableKey={clerkPubKey}
+    publishableKey={publishableKey}
     proxyUrl={clerkProxyUrl}
     appearance={clerkAppearance}
     signInUrl={`${basePath}/sign-in`}
@@ -868,10 +930,11 @@ function ClerkApp() {
     localization={enUS}
     routerPush={(to) => { queryClient.clear(); setLocation(stripBase(to)); }}
     routerReplace={(to) => { queryClient.clear(); setLocation(stripBase(to), { replace: true }); }}
-  ><ClerkCacheBridge /><AppRoutes /></ClerkProvider>;
+  ><ClerkAuthBridge /></ClerkProvider>;
 }
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={basePath}><ClerkApp /></WouterRouter><Toaster richColors position="top-right" /></TooltipProvider></QueryClientProvider>;
+  const routes = demoMode ? <DemoAuthBridge><AppRoutes /></DemoAuthBridge> : clerkPubKey ? <ClerkApp publishableKey={clerkPubKey} /> : <UnavailableAuthBridge><AppRoutes /></UnavailableAuthBridge>;
+  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={basePath}>{routes}</WouterRouter><Toaster richColors position="top-right" /></TooltipProvider></QueryClientProvider>;
 }
 
 export default App;
