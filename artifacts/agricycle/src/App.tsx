@@ -31,7 +31,7 @@ import { Toaster, toast } from 'sonner';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 25_000, retry: 1 } } });
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
-const demoMode = import.meta.env.VITE_DEMO_MODE === 'true' || (import.meta.env.DEV && !clerkPubKey);
+const demoMode = import.meta.env.VITE_DEMO_MODE === 'true' || !clerkPubKey;
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 type AuthSession = {
